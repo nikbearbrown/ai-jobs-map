@@ -5,7 +5,7 @@
 # runner runs only BR-0000 (the default).
 #
 # Each result is read from the run's ecosystem.json; nothing is added to the build. Values at the default
-# (v1, 2026-11-22) are given in `default_note` for orientation only; the runner always compares a branch with a
+# (BR-0000 at commit 8673b2a, 2026-11-23) are given in `default_note` for orientation only; the runner always compares a branch with a
 # fresh BR-0000 run at the same code commit.
 #
 # Flip rules
@@ -30,33 +30,34 @@ results:
   read: {from: step_counts, step_prefix: "ai: roles with omega -> AI-related", value: out_over_in}
   flip_rule: crosses
   threshold: 0.5
-  default_note: 42,825 of 45,167 (94.8%)
+  default_note: 46,377 of 48,407 (95.8%)
 
 - id: KR-03
   title: Seed-skill base rate (text roles naming a seed skill)
   read: {from: step_counts, step_prefix: "ai: text roles -> roles naming a seed skill", value: out_over_in}
   flip_rule: none
-  default_note: 7,631 of 45,310 (16.8%)
+  default_note: 8,796 of 48,495 (18.1%)
 
 - id: KR-04
   title: Firms with an AI section
   read: {from: firms_measured}
   flip_rule: none
-  default_note: "47"
+  default_note: "51"
 
 - id: KR-05
   title: Signal types ranked by the number of measured firms with at least one such role
   read: {from: signal_type_firms}
   flip_rule: order-changes
-  default_note: builds 43, integrates 42, uses_tools 0
+  default_note: builds 49, integrates 48, uses_tools 0
 
 - id: KR-06
   title: Most common signal type in each sector bucket with at least 5 measured firms
   read: {from: top_signal_type_by_bucket, min_measured_firms: 5}
   flip_rule: top-changes
   default_note: >-
-    it-services integrates (9 vs 8); software-internet tied builds/integrates (8 each); industrials tied (4 each).
-    Two of three buckets are tied at the default, so this result moves with one firm.
+    Four buckets qualify. financial-services, it-services and software-internet are tied between builds and
+    integrates (5, 10 and 8 each); industrials is builds (5 vs 4). Three of four buckets are tied at the default,
+    so this result moves with one firm.
 
 - id: KR-07
   title: Share of distinct roles with an occupation code
