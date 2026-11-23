@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.DS_Store
+.claude/
+cache/
+
+# generated outputs: rebuild with `python3 -I pipeline/run.py build`
+data/ai-jobs-map/v1/
+
+# multiverse branch runs: local only (firm-level outputs and provenance stay on this Mac)
+paper/multiverse/runs/
+
+# phase reports written for review gates: local only
+notes/
