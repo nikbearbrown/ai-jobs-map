@@ -1,0 +1,72 @@
+naics_prefix,bucket_id,bucket,naics_version,note
+513210,software-internet,Software & Internet,2022,Software publishers
+511210,software-internet,Software & Internet,2017,Software publishers (2017 code; 2022 = 513210)
+518210,software-internet,Software & Internet,2017+2022,"Computing infrastructure, data processing, hosting"
+519290,software-internet,Software & Internet,2022,Web search portals and all other information services
+519130,software-internet,Software & Internet,2017,Internet publishing and web search portals (2017; 2022 split to 516210/519290)
+516210,software-internet,Software & Internet,2022,"Media streaming, social networks and other content providers"
+5415,it-services,IT Services,2017+2022,Computer systems design; product firms filing here may be reassigned by evidence (inferred)
+3341,semiconductors-electronics,Semiconductors & Electronics,2017+2022,
+3342,semiconductors-electronics,Semiconductors & Electronics,2017+2022,
+3343,semiconductors-electronics,Semiconductors & Electronics,2017+2022,
+3344,semiconductors-electronics,Semiconductors & Electronics,2017+2022,
+3345,semiconductors-electronics,Semiconductors & Electronics,2017+2022,"Except 334510, 334516, 334517 (longer prefixes below)"
+3346,semiconductors-electronics,Semiconductors & Electronics,2017+2022,
+3254,life-sciences,Life Sciences,2017+2022,Pharmaceutical and medicine manufacturing
+541714,life-sciences,Life Sciences,2022,R&D in biotechnology (except nanobiotechnology)
+541711,life-sciences,Life Sciences,2017,R&D in biotechnology (2017 code)
+334516,life-sciences,Life Sciences,2017+2022,Analytical laboratory instruments
+541380,life-sciences,Life Sciences,2017+2022,Testing laboratories and services
+3391,medical-devices,Medical Devices & Diagnostics,2017+2022,
+334510,medical-devices,Medical Devices & Diagnostics,2017+2022,Electromedical apparatus
+334517,medical-devices,Medical Devices & Diagnostics,2017+2022,Irradiation apparatus
+621511,medical-devices,Medical Devices & Diagnostics,2017+2022,Medical laboratories
+621512,medical-devices,Medical Devices & Diagnostics,2017+2022,Diagnostic imaging centers
+621,health-care-delivery,Health Care Delivery & Payers,2017+2022,Except 6215 (above)
+622,health-care-delivery,Health Care Delivery & Payers,2017+2022,
+623,health-care-delivery,Health Care Delivery & Payers,2017+2022,
+524114,health-care-delivery,Health Care Delivery & Payers,2017+2022,Direct health and medical insurance carriers
+52,financial-services,Financial Services,2017+2022,Except 524114; includes 522320 payments processing
+5411,professional-services,Professional Services,2017+2022,
+5412,professional-services,Professional Services,2017+2022,
+5413,professional-services,Professional Services,2017+2022,
+5414,professional-services,Professional Services,2017+2022,
+5416,professional-services,Professional Services,2017+2022,
+5418,professional-services,Professional Services,2017+2022,
+5419,professional-services,Professional Services,2017+2022,
+541720,professional-services,Professional Services,2017+2022,R&D in social sciences and humanities
+541713,professional-services,Professional Services,2022,R&D in nanotechnology; routed by hiring shape (inferred)
+541715,professional-services,Professional Services,2022,"R&D in physical, engineering and life sciences (except nano and biotech); routed by hiring shape (inferred)"
+541712,professional-services,Professional Services,2017,"R&D in physical, engineering and life sciences (except biotech), 2017 code; routed by hiring shape (inferred)"
+5613,staffing,Staffing & Employment,2017+2022,
+31,industrials,Industrials & Manufacturing,2017+2022,Manufacturing not listed elsewhere
+32,industrials,Industrials & Manufacturing,2017+2022,
+33,industrials,Industrials & Manufacturing,2017+2022,
+11,industrials,Industrials & Manufacturing,2017+2022,Agriculture
+23,industrials,Industrials & Manufacturing,2017+2022,Construction
+42,industrials,Industrials & Manufacturing,2017+2022,Wholesale
+48,industrials,Industrials & Manufacturing,2017+2022,Transportation
+49,industrials,Industrials & Manufacturing,2017+2022,Warehousing
+5617,industrials,Industrials & Manufacturing,2017+2022,Services to buildings
+562,industrials,Industrials & Manufacturing,2017+2022,Waste management
+21,energy-utilities,Energy & Utilities,2017+2022,
+22,energy-utilities,Energy & Utilities,2017+2022,
+335910,energy-utilities,Energy & Utilities,2022,Battery manufacturing
+33591,energy-utilities,Energy & Utilities,2017,Battery manufacturing (2017: 335911/335912)
+512,media-telecom,Media & Telecom,2017+2022,
+5131,media-telecom,Media & Telecom,2022,"Newspaper, periodical, book and directory publishers"
+5111,media-telecom,Media & Telecom,2017,"Newspaper, periodical, book and directory publishers (2017 code)"
+516110,media-telecom,Media & Telecom,2022,Radio broadcasting
+516120,media-telecom,Media & Telecom,2022,Television broadcasting
+515,media-telecom,Media & Telecom,2017,Broadcasting (2017 code)
+517,media-telecom,Media & Telecom,2017+2022,
+44,consumer-retail,Consumer & Retail,2017+2022,
+45,consumer-retail,Consumer & Retail,2017+2022,
+71,consumer-retail,Consumer & Retail,2017+2022,
+72,consumer-retail,Consumer & Retail,2017+2022,
+811,consumer-retail,Consumer & Retail,2017+2022,
+812,consumer-retail,Consumer & Retail,2017+2022,
+53,real-estate,Real Estate,2017+2022,
+61,education,Education,2017+2022,
+92,government-civic,Government & Civic,2017+2022,
+813,government-civic,Government & Civic,2017+2022,

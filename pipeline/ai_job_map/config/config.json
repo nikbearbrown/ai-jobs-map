@@ -1,0 +1,116 @@
+{
+  "config_version": "ai-job-map-config-v1",
+  "data_version": "2026-11-11.1",
+  "method_versions": {
+    "dedup": "dedup-v1", "requirements_text": "reqtext-v1", "skills": "skills-ngram-v1",
+    "ai_relatedness": "ai-relatedness-v1", "signal_types": "signal-types-v1", "soc": "soc-title-v1",
+    "tier": "tier-splithalf-v1", "sector": "sector-naics-v1", "org_label": "org-label-v1", "dynamics": "dynamics-v1", "lca": "lca-v1"
+  },
+
+  "inputs": {
+    "live_collection": "/Users/bear/Documents/CoWork/job-snapshots/ai-jobs-current-2026-11-22.jsonl",
+    "live_collection_observed": ["2026-10-24", "2026-11-22"],
+    "text_snapshot_dir": "/Users/bear/Documents/CoWork/job-snapshots/descriptions-2026-11-11",
+    "text_snapshot_date": "2026-11-11",
+    "onet_title_map": "/Users/bear/Documents/CoWork/bear-textbooks/books/a-new-shape-for-work/data/title-map.tsv",
+    "companies_csv": "/Users/bear/Documents/CoWork/bear-textbooks/books/ai-jobs/data/companies/companies.csv",
+    "directory_json": "/Users/bear/Documents/CoWork/job-snapshots/directory-origin-main-45f57cd.json",
+    "lca_dir": "/Users/bear/Documents/Codex/2026-10-31/task-2/research-jobs/cache/dol-lca",
+    "lca_matched_cache": "/Users/bear/Documents/CoWork/job-snapshots/lca-matched-v1.jsonl.gz",
+    "lca_observed": ["2023-10-01", "2026-06-30"],
+    "lca_quarters_missing": ["FY2026 Q1", "FY2026 Q2"],
+    "output_dir": "data/ai-job-map/v1",
+    "private_review_dir": "/Users/bear/Documents/CoWork/job-snapshots/review-private",
+    "labels_dir": "data/ai-job-map/labels"
+  },
+
+  "dedup": {
+    "requisition_token": "\\(?\\b(?:r|req|jr|job)?[-# ]?\\d{4,}\\b\\)?|#\\d+",
+    "trailing_employment_suffix": "-(?:ft|pt)$"
+  },
+
+  "requirements_text": {
+    "heading_max_chars": 70,
+    "drop_heading_patterns": ["about (us|the company|the team|our|[a-z0-9&.' -]+$)", "who we are", "our (mission|story|values|culture|benefits)", "what we believe", "why (join|work)", "benefits?\\b", "perks", "what we offer", "we offer", "compensation", "pay (range|transparency)", "salary", "base (pay|salary)", "equal (employment|opportunity)", "eeo", "(requesting )?(an )?accommodations?$", "privacy (notice|policy|statement)", "e-verify", "life at", "diversity(,| and| &)", "other employment statements", "how to apply", "u\\.?s\\.? pay", "data privacy", "protecting yourself", "please always verify", "#?li-", "our commitment", "(us |u\\.s\\. )?salary", "itar"],
+    "keep_heading_patterns": ["(key )?responsibilit", "what you('ll| will) do", "the role", "your role", "the work", "you will", "(minimum |basic |preferred )?qualification", "requirement", "what you('ll| will) bring", "you have", "you bring", "skills", "experience", "nice to have", "preferred", "bonus", "ideal candidate", "about you", "who you are", "what we('re| are) looking for", "minimum", "basic", "must have", "what you need", "what you'll need", "about (the|this) (role|job|position|opportunity)", "the opportunity", "required", "what we('re| are)? look(ing)? for", "job (description|summary|duties)", "position (summary|overview|description)", "role (overview|summary|description)", "your impact", "in this role", "what you('ll| will) be doing", "your responsibilit", "(key |job |essential )?duties", "day[- ]to[- ]day", "a day in the life", ".*\\((responsibilities|requirements|qualifications)\\)", "what you('ll| will) (achieve|accomplish|own)"],
+    "firm_repetition_drop": { "share_of_firm_postings": 0.3, "min_firm_postings": 5 }
+  },
+
+  "skills": {
+    "max_ngram": 3,
+    "min_support_roles": 20,
+    "min_support_firms": 3,
+    "max_doc_share": 0.3,
+    "token_alias": { "ml": "machine learning", "nlp": "natural language processing", "llm": "large language models", "llms": "large language models", "genai": "generative ai" },
+    "ngram_alias": { "large language model": "large language models", "gen ai": "generative ai", "neural network": "neural networks" },
+    "min_skills_for_omega": 3
+  },
+
+  "ai_relatedness": {
+    "citation": "Babina, Fedyk, He & Hodson (2024), Journal of Financial Economics 151:103745",
+    "seed_skills": ["machine learning", "deep learning", "natural language processing", "computer vision", "large language models", "generative ai"],
+    "threshold": 0.1,
+    "exclude_providers_from_corpus": ["smartrecruiters", "workable"],
+    "exclude_reason": "Text was fetched only for postings chosen by title on these boards, so their text sample is selected on titles."
+  },
+
+  "signal_types": {
+    "builds": ["model training", "train models", "training models", "train and deploy", "pretraining", "pre-training", "fine-tuning", "fine tuning", "finetuning", "rlhf", "reinforcement learning", "distributed training", "pytorch", "jax", "tensorflow", "model evaluation", "evals", "benchmarks", "ml research", "machine learning research", "neurips", "icml", "iclr", "cvpr", "model architecture", "model architectures", "inference optimization", "cuda"],
+    "integrates": ["openai api", "anthropic api", "claude api", "llm api", "llm apis", "retrieval-augmented", "retrieval augmented", "rag", "vector database", "vector databases", "vector store", "embeddings", "langchain", "llamaindex", "function calling", "tool use", "ai agents", "agentic", "prompt engineering", "model context protocol", "mcp"],
+    "uses_tools": ["github copilot", "copilot", "chatgpt", "claude", "cursor", "gemini", "midjourney", "perplexity", "ai-assisted", "ai tools", "generative ai tools", "ai-powered tools"]
+  },
+
+  "application_tags": {
+    "min_roles": 3,
+    "min_share_of_text_roles": 0.1,
+    "tags": {
+      "health-care-technology": ["ehr", "electronic health record", "clinicians", "providers and payers", "payer", "hipaa", "clinical workflows", "patient care", "health system", "healthcare"],
+      "fintech": ["payments", "fintech", "lending", "underwriting", "banking", "trading", "fraud", "credit risk", "brokerage"],
+      "climate-tech": ["climate", "decarbonization", "carbon", "renewable", "battery", "grid", "solar", "energy storage", "emissions"],
+      "robotics-autonomy": ["robot", "robots", "robotics", "ros", "motion planning", "manipulation", "autonomous", "autonomy", "perception", "slam"],
+      "education-technology": ["learners", "edtech", "curriculum", "students", "tutoring", "teachers", "k-12"],
+      "defense-aerospace": ["defense", "dod", "aerospace", "spacecraft", "satellite", "security clearance", "clearance", "mission systems", "avionics"],
+      "ai-infrastructure": ["gpu", "gpus", "inference", "model serving", "training infrastructure", "ml platform", "mlops", "kubernetes", "data pipelines", "compute"]
+    },
+    "life_sciences_subtags": {
+      "drug-development": ["drug discovery", "drug development", "clinical trials", "therapeutics", "pipeline", "biologics", "ind", "preclinical"],
+      "tools-and-services": ["contract research", "cro", "assay services", "lab services", "instrumentation", "reagents", "sequencing services"]
+    }
+  },
+
+  "tier": {
+    "splits_per_firm": 200,
+    "random_seed": 20261122,
+    "role_count_bins": [[5, 9], [10, 14], [15, 19], [20, 24], [25, 29], [30, 39], [40, 49], [50, 74], [75, 99], [100, 149], [150, 199], [200, 100000]],
+    "plateau_min_roles": 100,
+    "within_plateau": 0.02,
+    "max_next_gain": 0.01,
+    "fallback_cutoff": 20
+  },
+
+  "sector": {
+    "buckets_csv": "pipeline/ai_job_map/config/naics-buckets.csv",
+    "it_services_to_software": { "max_secondary_entity_share": 0.1, "max_worksite_cities": 5, "min_software_dev_share": 0.4, "software_dev_socs": ["15-1252", "15-1253", "15-1254", "15-1255", "15-1256", "15-1257", "15-2051"] },
+    "it_services_keep": { "min_secondary_entity_share": 0.3, "h1b_dependent": true, "min_worksite_cities": 20 },
+    "rnd_codes": ["541713", "541715", "541712"],
+    "rnd_route": { "min_share": 0.3, "life_sciences_socs_prefix": ["19-1", "19-2031", "19-4021", "29-"], "semis_socs": ["17-2061", "17-2071", "17-2072"], "engineering_socs_prefix": ["17-"] },
+    "source_precedence": ["dol-lca", "sec-edgar-sic", "sec-form-d", "inferred-from-hiring-shape"]
+  },
+
+  "visa_display": {
+    "count_positions_not_cases": true,
+    "case_statuses_counted": ["Certified", "Certified - Withdrawn"],
+    "recency_window_months": 24,
+    "min_decisions_for_rates": 10,
+    "past_not_future_note": "This shows past filings, not future sponsorship decisions.",
+    "not_covered_note": "There is no public employer-level data for O-1, L-1, TN or OPT employment. A firm missing here may still sponsor."
+  },
+
+  "geography": {
+    "boston_area": ["Boston", "Cambridge", "Somerville", "Brookline", "Newton", "Waltham", "Watertown", "Woburn", "Burlington", "Lexington", "Bedford", "Billerica", "Medford", "Malden", "Quincy", "Needham", "Wellesley", "Natick", "Framingham", "Marlborough", "Westborough", "Andover", "North Andover", "Lowell", "Chelmsford", "Westford", "Devens", "Wilmington", "Danvers", "Beverly", "Salem", "Lynn", "Braintree", "Norwood", "Canton", "Dedham", "Chestnut Hill", "Charlestown", "Everett", "Revere", "Chelsea", "Arlington", "Belmont", "Concord", "Maynard", "Acton", "Hopkinton", "Grafton", "Worcester", "Weston", "Petersham"],
+    "boston_area_note": "Editable definition: Massachusetts towns in this list. Only towns with a reviewed anchor in directory.json are drawn on the map."
+  },
+
+  "aggregation": { "default_weighting": "firm" },
+  "review": { "random_roles": 50, "random_tier_a_firms": 20, "top_skills": 100, "seed": 20261122 }
+}

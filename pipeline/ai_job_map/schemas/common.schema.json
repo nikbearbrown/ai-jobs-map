@@ -1,0 +1,296 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jobs.humanitarians.ai/schemas/ai-job-map/common-v1.json",
+  "title": "AI job map: shared definitions (v1, implemented)",
+  "description": "Provenance and the measured / not-measured wrapper used by every derived value. Rule: a figure without provenance does not validate; a construct with no data is an explicit not_measured block with a reason, never a zero or a blank.",
+  "$defs": {
+    "date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "observed_from",
+        "observed_to"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable id from the config's source registry, e.g. ai-jobs-live, desc-snapshot-2026-11-11, dol-lca-fy2024q1-fy2026q3, onet-31.0."
+        },
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "job-postings",
+            "posting-text-snapshot",
+            "visa-filing",
+            "occupation-data",
+            "organization-directory",
+            "securities-filing",
+            "tax-exempt-registry",
+            "industry-staffing-pattern",
+            "gazetteer"
+          ]
+        },
+        "location": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Path or URL of the raw input. Never published when it holds ad text."
+        },
+        "sha256": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "observed_from": {
+          "$ref": "#/$defs/date"
+        },
+        "observed_to": {
+          "$ref": "#/$defs/date"
+        },
+        "stage": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Visa sources only: prevailing-wage | lca | uscis-petition | perm. Shown next to every visa number."
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sources",
+        "date_range",
+        "distinct_roles_used",
+        "method_version",
+        "computed_at"
+      ],
+      "properties": {
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        },
+        "date_range": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "from",
+            "to"
+          ],
+          "properties": {
+            "from": {
+              "$ref": "#/$defs/date"
+            },
+            "to": {
+              "$ref": "#/$defs/date"
+            }
+          }
+        },
+        "distinct_roles_used": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "Null only for values not built from roles (e.g. visa filings, which report positions and cases instead)."
+        },
+        "units_used": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Non-role units, e.g. {\"lca_cases\": 41, \"lca_positions\": 57}."
+        },
+        "method_version": {
+          "type": "string",
+          "description": "e.g. ai-relatedness-v1, soc-title-v1, dedup-v1. Changing a rule bumps the version; old outputs are never edited."
+        },
+        "config_sha256": {
+          "type": "string"
+        },
+        "computed_at": {
+          "type": "string",
+          "description": "ISO 8601 datetime of the pipeline run."
+        },
+        "methods_url": {
+          "type": "string",
+          "default": "/methodology#ai-job-map"
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "not_measured": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason_code",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "not_measured"
+        },
+        "reason_code": {
+          "enum": [
+            "no-source",
+            "source-not-approved",
+            "no-text-for-firm",
+            "text-selected-by-title",
+            "too-few-roles",
+            "no-match-in-source",
+            "below-display-minimum",
+            "deferred-by-decision",
+            "not-applicable"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "description": "Plain-language sentence shown in the UI."
+        },
+        "minimum_required": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "observed": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      }
+    },
+    "count_share": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "roles",
+        "share"
+      ],
+      "properties": {
+        "roles": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "share": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "histogram": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bin_edges",
+        "counts"
+      ],
+      "properties": {
+        "bin_edges": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2
+        },
+        "counts": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "soc_share": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "title",
+        "roles",
+        "share"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "SOC 2018: 2-digit major group (e.g. 15-0000), 6-digit detailed (15-1252), or 'unassigned'."
+        },
+        "title": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "share": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "source_id",
+        "observed_on"
+      ],
+      "properties": {
+        "value": {},
+        "source_id": {
+          "type": "string"
+        },
+        "source_record": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "e.g. SEC accession number, LCA case number, EIN-free registry id."
+        },
+        "observed_on": {
+          "$ref": "#/$defs/date"
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "basis": {
+          "enum": [
+            "reported",
+            "inferred",
+            "derived"
+          ],
+          "description": "Reported by a source, inferred by our rule, or derived from other facts. The 'reported only' toggle hides inferred and derived values."
+        }
+      }
+    }
+  }
+}

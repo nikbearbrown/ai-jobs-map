@@ -1,0 +1,1114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jobs.humanitarians.ai/schemas/ai-job-map/firm-v1.json",
+  "title": "AI job map: firm record (v1, implemented)",
+  "description": "One firm = one employer identity in the crosswalk (crosswalk.schema.json). Firms only: research groups never get this record. Every section is either measured (with provenance) or an explicit not_measured block. No ad text anywhere; role titles allowed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "data_version",
+    "firm_id",
+    "slug",
+    "name",
+    "identity",
+    "facts",
+    "labels",
+    "geography",
+    "tier",
+    "sections",
+    "not_measured",
+    "computed_at"
+  ],
+  "$defs": {
+    "c": {
+      "$ref": "common.schema.json#/$defs"
+    },
+    "measured": {
+      "type": "object",
+      "required": [
+        "status",
+        "provenance"
+      ],
+      "properties": {
+        "status": {
+          "const": "measured"
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/provenance"
+        }
+      }
+    },
+    "section": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/measured"
+        },
+        {
+          "$ref": "common.schema.json#/$defs/not_measured"
+        }
+      ]
+    },
+    "example_titles": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "string"
+      },
+      "description": "Role titles only, never ad text."
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "const": "firm-v1"
+    },
+    "data_version": {
+      "type": "string",
+      "description": "Pipeline output version, e.g. 2026-11-11.1 (snapshot date + run)."
+    },
+    "firm_id": {
+      "type": "string",
+      "description": "Crosswalk id, stable across runs."
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Route: /ecosystem/[slug]."
+    },
+    "name": {
+      "type": "string"
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ai_jobs_company_ids",
+        "directory_ids",
+        "lca_employer_names",
+        "crosswalk_rows"
+      ],
+      "properties": {
+        "ai_jobs_company_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "boards": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "provider:board"
+          }
+        },
+        "directory_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Map directory record ids (startup-jobs), if matched."
+        },
+        "lca_employer_names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "crosswalk_rows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lowest_match_confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low",
+            "reviewed",
+            null
+          ]
+        }
+      }
+    },
+    "facts": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Stored facts, each with its source. Null = not observed. Labels are derived from these by rules in the config, never stored by hand.",
+      "properties": {
+        "incorporation_year": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "public_status": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "SEC periodic filer or not."
+        },
+        "private_fundraising": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/fact"
+          },
+          "description": "Form D filings: date, amount sold, industry group."
+        },
+        "accelerator": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/fact"
+          }
+        },
+        "parent_company": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nonprofit_status": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "size_proxies": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "distinct_roles": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "lca_positions_24m": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "form_d_revenue_range": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "legal_form": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "C-corporation, LLC, benefit corporation, nonprofit corporation, partnership (state registries)"
+        },
+        "state_of_incorporation": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Registry foreign-corporation records or EDGAR"
+        },
+        "benefit_corporation": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Legal form, distinct from B Corp certification"
+        },
+        "certified_b_corp": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "B Lab directory; a certification, not a legal status"
+        },
+        "nonprofit_subsection": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "IRS EO BMF: 501(c)(3), (c)(4), (c)(6), other"
+        },
+        "ntee_major_group": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "IRS EO BMF"
+        },
+        "capital_raised_reported_at_least": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Sum of Form D (and C, 1-A) amounts sold; always a lower bound"
+        },
+        "most_recent_raise": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Form D first-sale or filing date"
+        },
+        "crowdfunded": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Form C"
+        },
+        "spinout_of": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Linked institution or lab; inferred"
+        },
+        "e_verify": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "USCIS E-Verify employer search; 'not found' is not 'not enrolled'"
+        },
+        "potentially_cap_exempt": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Derived from organization type; a legal determination is case-specific"
+        },
+        "ticker": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "SEC EDGAR"
+        },
+        "nonprofit_revenue_band": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "IRS BMF / Form 990"
+        },
+        "hiring_trend": {
+          "oneOf": [
+            {
+              "$ref": "common.schema.json#/$defs/fact"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Distinct roles, last two quarters; needs two quarters of collection"
+        },
+        "organization_types": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "company",
+              "nonprofit",
+              "university",
+              "hospital",
+              "government",
+              "research-lab"
+            ]
+          },
+          "description": "Several allowed per organization."
+        }
+      }
+    },
+    "labels": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "org_label",
+        "rule_version",
+        "inputs_used"
+      ],
+      "properties": {
+        "org_label": {
+          "enum": [
+            "public-company",
+            "office-or-subsidiary",
+            "venture-backed-startup",
+            "young-company",
+            "established-private",
+            "nonprofit",
+            "not-classified"
+          ]
+        },
+        "rule_version": {
+          "type": "string"
+        },
+        "inputs_used": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Which facts fired the rule."
+        }
+      }
+    },
+    "sector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "naics",
+        "bucket",
+        "application_tags"
+      ],
+      "properties": {
+        "naics": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "status",
+                "code",
+                "share_of_filings",
+                "filings",
+                "basis",
+                "provenance"
+              ],
+              "properties": {
+                "status": {
+                  "const": "measured"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "share_of_filings": {
+                  "type": "number"
+                },
+                "filings": {
+                  "type": "integer"
+                },
+                "basis": {
+                  "enum": [
+                    "self-reported-on-visa-filings",
+                    "sec-sic-crosswalk",
+                    "form-d-industry-group",
+                    "inferred-from-hiring-shape"
+                  ]
+                },
+                "similarity": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "Only for inferred-from-hiring-shape."
+                },
+                "provenance": {
+                  "$ref": "common.schema.json#/$defs/provenance"
+                },
+                "naics_version": {
+                  "type": "string"
+                },
+                "alternates": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  },
+                  "description": "Other sources' codes (SEC SIC, Form D industry group, inferred); kept, never overwritten."
+                },
+                "conflict": {
+                  "type": "boolean"
+                }
+              }
+            },
+            {
+              "$ref": "common.schema.json#/$defs/not_measured"
+            }
+          ]
+        },
+        "bucket": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Our own coarse market-map bucket, from the NAICS crosswalk in config. Null when NAICS is not measured."
+        },
+        "application_tags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "tag",
+              "basis",
+              "inferred"
+            ],
+            "properties": {
+              "tag": {
+                "type": "string"
+              },
+              "basis": {
+                "enum": [
+                  "requirement-text-terms",
+                  "self-description"
+                ]
+              },
+              "inferred": {
+                "const": true
+              },
+              "roles": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "reassignment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "from_bucket",
+            "to_bucket",
+            "reason",
+            "inferred"
+          ],
+          "properties": {
+            "from_bucket": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "to_bucket": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "inferred": {
+              "const": true
+            }
+          }
+        }
+      }
+    },
+    "geography": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "precision",
+        "cities"
+      ],
+      "properties": {
+        "precision": {
+          "const": "city",
+          "description": "Posting and filing locations are city-level. Never drawn as street points."
+        },
+        "cities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "city",
+              "state",
+              "roles",
+              "source"
+            ],
+            "properties": {
+              "city": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "roles": {
+                "type": "integer"
+              },
+              "lca_positions": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "source": {
+                "enum": [
+                  "posting-location",
+                  "lca-worksite"
+                ]
+              }
+            }
+          }
+        },
+        "remote_roles": {
+          "type": "integer"
+        },
+        "unparsed_location_roles": {
+          "type": "integer"
+        }
+      }
+    },
+    "tier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tier",
+        "distinct_roles",
+        "cutoff",
+        "rule_version"
+      ],
+      "properties": {
+        "tier": {
+          "enum": [
+            "A",
+            "B"
+          ]
+        },
+        "distinct_roles": {
+          "type": "integer"
+        },
+        "text_roles": {
+          "type": "integer",
+          "description": "Distinct roles with requirement text in the snapshot."
+        },
+        "cutoff": {
+          "type": "integer"
+        },
+        "text_cutoff": {
+          "type": "integer"
+        },
+        "rule_version": {
+          "type": "string"
+        }
+      }
+    },
+    "sections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ai_signals",
+        "hiring_shape",
+        "lexicon",
+        "exposure",
+        "over_time",
+        "posting_dynamics",
+        "visa_filings",
+        "evidence_of_building",
+        "self_description"
+      ],
+      "properties": {
+        "ai_signals": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/section"
+            }
+          ],
+          "description": "Measured shape: omega_histogram, threshold, share_above_threshold {roles, share}, by_type {builds, integrates, uses_tools} each {roles, share, example_titles}. From the posting-text snapshot only.",
+          "properties": {
+            "omega_histogram": {
+              "$ref": "common.schema.json#/$defs/histogram"
+            },
+            "threshold": {
+              "type": "number"
+            },
+            "share_above_threshold": {
+              "$ref": "common.schema.json#/$defs/count_share"
+            },
+            "by_type": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "builds": {
+                  "type": "object",
+                  "properties": {
+                    "roles": {
+                      "type": "integer"
+                    },
+                    "share": {
+                      "type": "number"
+                    },
+                    "example_titles": {
+                      "$ref": "#/$defs/example_titles"
+                    }
+                  }
+                },
+                "integrates": {
+                  "type": "object",
+                  "properties": {
+                    "roles": {
+                      "type": "integer"
+                    },
+                    "share": {
+                      "type": "number"
+                    },
+                    "example_titles": {
+                      "$ref": "#/$defs/example_titles"
+                    }
+                  }
+                },
+                "uses_tools": {
+                  "type": "object",
+                  "properties": {
+                    "roles": {
+                      "type": "integer"
+                    },
+                    "share": {
+                      "type": "number"
+                    },
+                    "example_titles": {
+                      "$ref": "#/$defs/example_titles"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "hiring_shape": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/section"
+            }
+          ],
+          "properties": {
+            "soc_major": {
+              "type": "array",
+              "items": {
+                "$ref": "common.schema.json#/$defs/soc_share"
+              }
+            },
+            "soc_detailed": {
+              "type": "array",
+              "items": {
+                "$ref": "common.schema.json#/$defs/soc_share"
+              }
+            },
+            "unassigned": {
+              "$ref": "common.schema.json#/$defs/count_share"
+            },
+            "baselines": {
+              "type": "object",
+              "properties": {
+                "boston_all": {
+                  "type": "string",
+                  "description": "Ref into ecosystem.json baselines."
+                },
+                "bucket_peers": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            },
+            "assignment_basis": {
+              "const": "title",
+              "description": "v1 assigns SOC from the role title. Body-text assignment waits for the collector change."
+            }
+          }
+        },
+        "lexicon": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/section"
+            }
+          ]
+        },
+        "exposure": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/section"
+            }
+          ],
+          "properties": {
+            "score": {
+              "type": "number"
+            },
+            "measure": {
+              "type": "string",
+              "description": "Which occupation-level exposure measure, by name and version."
+            },
+            "roles_with_exposure": {
+              "type": "integer"
+            },
+            "plain_language": {
+              "type": "string"
+            }
+          }
+        },
+        "over_time": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/section"
+            }
+          ],
+          "properties": {
+            "roles_per_month": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "month": {
+                    "type": "string"
+                  },
+                  "roles": {
+                    "type": "integer"
+                  }
+                }
+              }
+            },
+            "ai_share_per_month": {
+              "oneOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "$ref": "common.schema.json#/$defs/not_measured"
+                }
+              ]
+            }
+          }
+        },
+        "posting_dynamics": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/section"
+            }
+          ],
+          "properties": {
+            "median_days_open_observed": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "median_days_open_km": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Kaplan-Meier median counting still-open postings as censored."
+            },
+            "postings_closed": {
+              "type": "integer"
+            },
+            "postings_still_open": {
+              "type": "integer"
+            },
+            "relisted_roles": {
+              "oneOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "$ref": "common.schema.json#/$defs/not_measured"
+                }
+              ],
+              "description": "Same normalised title + location + ad hash under a new posting id. Hash-bearing boards only."
+            }
+          }
+        },
+        "visa_filings": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "lca",
+            "perm",
+            "prevailing_wage",
+            "uscis",
+            "not_covered_note",
+            "past_not_future_note"
+          ],
+          "properties": {
+            "lca": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "required": [
+                    "status",
+                    "stage",
+                    "positions",
+                    "cases",
+                    "by_case_status",
+                    "by_wage_level",
+                    "by_soc",
+                    "by_fiscal_year",
+                    "secondary_entity_positions",
+                    "provenance"
+                  ],
+                  "properties": {
+                    "status": {
+                      "const": "measured"
+                    },
+                    "stage": {
+                      "const": "lca"
+                    },
+                    "positions": {
+                      "type": "integer"
+                    },
+                    "cases": {
+                      "type": "integer"
+                    },
+                    "by_case_status": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "integer"
+                      }
+                    },
+                    "by_visa_class": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "integer"
+                      }
+                    },
+                    "by_wage_level": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "integer"
+                      },
+                      "description": "Positions by PW_WAGE_LEVEL I-IV (and 'not stated')."
+                    },
+                    "by_soc": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "common.schema.json#/$defs/soc_share"
+                      }
+                    },
+                    "ai_soc_positions": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "by_fiscal_year": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "integer"
+                      }
+                    },
+                    "secondary_entity_positions": {
+                      "type": "integer",
+                      "description": "Positions where the filing names a secondary entity (client site). Neutral observable; no label."
+                    },
+                    "provenance": {
+                      "$ref": "common.schema.json#/$defs/provenance"
+                    }
+                  }
+                },
+                {
+                  "$ref": "common.schema.json#/$defs/not_measured"
+                }
+              ]
+            },
+            "perm": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "required": [
+                    "status",
+                    "stage",
+                    "provenance"
+                  ],
+                  "properties": {
+                    "status": {
+                      "const": "measured"
+                    },
+                    "stage": {
+                      "const": "perm"
+                    },
+                    "provenance": {
+                      "$ref": "common.schema.json#/$defs/provenance"
+                    }
+                  }
+                },
+                {
+                  "$ref": "common.schema.json#/$defs/not_measured"
+                }
+              ]
+            },
+            "prevailing_wage": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "required": [
+                    "status",
+                    "stage",
+                    "provenance"
+                  ],
+                  "properties": {
+                    "status": {
+                      "const": "measured"
+                    },
+                    "stage": {
+                      "const": "prevailing-wage"
+                    },
+                    "provenance": {
+                      "$ref": "common.schema.json#/$defs/provenance"
+                    }
+                  }
+                },
+                {
+                  "$ref": "common.schema.json#/$defs/not_measured"
+                }
+              ]
+            },
+            "uscis": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "required": [
+                    "status",
+                    "stage",
+                    "provenance"
+                  ],
+                  "properties": {
+                    "status": {
+                      "const": "measured"
+                    },
+                    "stage": {
+                      "const": "uscis-petition"
+                    },
+                    "rates_shown": {
+                      "type": "boolean",
+                      "description": "False below the minimum decision count; counts only."
+                    },
+                    "provenance": {
+                      "$ref": "common.schema.json#/$defs/provenance"
+                    }
+                  }
+                },
+                {
+                  "$ref": "common.schema.json#/$defs/not_measured"
+                }
+              ]
+            },
+            "not_covered_note": {
+              "type": "string",
+              "description": "No public employer-level data for O-1, L-1, TN or OPT employment."
+            },
+            "past_not_future_note": {
+              "type": "string",
+              "description": "This shows past filings, not future sponsorship decisions."
+            }
+          }
+        },
+        "evidence_of_building": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/section"
+            }
+          ],
+          "description": "Papers, repos, patents, model releases. Never computed from postings."
+        },
+        "self_description": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/section"
+            }
+          ],
+          "description": "Website or directory text. Never computed from postings."
+        }
+      }
+    },
+    "not_measured": {
+      "type": "array",
+      "description": "Every construct unavailable for this firm, repeated here for the page's 'Not measured' section.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "construct",
+          "reason"
+        ],
+        "properties": {
+          "construct": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "computed_at": {
+      "type": "string"
+    }
+  }
+}

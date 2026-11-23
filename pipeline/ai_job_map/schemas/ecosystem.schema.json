@@ -1,0 +1,532 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jobs.humanitarians.ai/schemas/ai-job-map/ecosystem-v1.json",
+  "title": "AI job map: ecosystem aggregates (v1, implemented)",
+  "description": "Everything the ecosystem view draws. Firm-weighted by default (each firm counts once) so one high-volume board cannot dominate; role-weighted figures carry an explicit weighting field. Research groups are a separate layer and never enter firm aggregates.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "data_version",
+    "computed_at",
+    "config_sha256",
+    "inputs",
+    "step_counts",
+    "firms",
+    "matrices",
+    "distributions",
+    "cities",
+    "baselines",
+    "research_layer"
+  ],
+  "$defs": {
+    "weighting": {
+      "enum": [
+        "firm",
+        "role",
+        "lca-position"
+      ]
+    },
+    "cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "firms",
+        "roles"
+      ],
+      "properties": {
+        "firms": {
+          "type": "integer"
+        },
+        "roles": {
+          "type": "integer"
+        },
+        "roles_excluding_largest_firm": {
+          "type": "integer"
+        }
+      }
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "const": "ecosystem-v1"
+    },
+    "data_version": {
+      "type": "string"
+    },
+    "computed_at": {
+      "type": "string"
+    },
+    "config_sha256": {
+      "type": "string"
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/source"
+      }
+    },
+    "step_counts": {
+      "type": "array",
+      "description": "The pipeline's count log, step by step, so every drop is visible (records read, deduplicated, excluded and why, matched, tiered).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "step",
+          "in",
+          "out"
+        ],
+        "properties": {
+          "step": {
+            "type": "string"
+          },
+          "in": {
+            "type": "integer"
+          },
+          "out": {
+            "type": "integer"
+          },
+          "excluded_by_reason": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "firms": {
+      "type": "array",
+      "description": "Index for the map, filters and treemap. Full detail lives in firms/<slug>.json.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "firm_id",
+          "slug",
+          "name",
+          "tier",
+          "org_label",
+          "bucket",
+          "cities",
+          "distinct_roles",
+          "ai_share",
+          "signal_types",
+          "visa_stages_present"
+        ],
+        "properties": {
+          "firm_id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tier": {
+            "enum": [
+              "A",
+              "B"
+            ]
+          },
+          "org_label": {
+            "type": "string"
+          },
+          "bucket": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bucket_basis": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "application_tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "in_boston_area": {
+            "type": "boolean"
+          },
+          "distinct_roles": {
+            "type": "integer"
+          },
+          "text_roles": {
+            "type": "integer"
+          },
+          "ai_share": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Null = not measured (see firm record for reason)."
+          },
+          "signal_types": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "builds": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "integrates": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "uses_tools": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            }
+          },
+          "visa_stages_present": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "prevailing-wage",
+                "lca",
+                "uscis-petition",
+                "perm"
+              ]
+            }
+          },
+          "lca_positions_24m": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "directory_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Link to the map directory record when matched."
+          }
+        }
+      }
+    },
+    "matrices": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "signal_type_by_bucket"
+      ],
+      "properties": {
+        "signal_type_by_bucket": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "weighting",
+            "rows",
+            "columns",
+            "cells",
+            "provenance"
+          ],
+          "properties": {
+            "weighting": {
+              "$ref": "#/$defs/weighting"
+            },
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "builds, integrates, uses_tools, none"
+            },
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Buckets plus 'sector not measured'."
+            },
+            "cells": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/cell"
+                }
+              }
+            },
+            "provenance": {
+              "$ref": "common.schema.json#/$defs/provenance"
+            }
+          }
+        },
+        "treemap": {
+          "type": "object",
+          "description": "bucket -> signal type -> firm; size = distinct roles or LCA positions (stated), colour = AI share or LCA positions per role (stated).",
+          "properties": {
+            "size_by": {
+              "enum": [
+                "distinct-roles",
+                "lca-positions"
+              ]
+            },
+            "colour_by": {
+              "enum": [
+                "ai-share",
+                "lca-positions-per-role"
+              ]
+            },
+            "nodes": {
+              "type": "array"
+            },
+            "provenance": {
+              "$ref": "common.schema.json#/$defs/provenance"
+            }
+          }
+        }
+      }
+    },
+    "distributions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "firm_ai_share"
+      ],
+      "properties": {
+        "firm_ai_share": {
+          "type": "object",
+          "required": [
+            "histogram",
+            "firms_measured",
+            "firms_not_measured",
+            "provenance"
+          ],
+          "properties": {
+            "histogram": {
+              "$ref": "common.schema.json#/$defs/histogram"
+            },
+            "firms_measured": {
+              "type": "integer"
+            },
+            "firms_not_measured": {
+              "type": "integer"
+            },
+            "provenance": {
+              "$ref": "common.schema.json#/$defs/provenance"
+            }
+          }
+        },
+        "role_omega": {
+          "type": "object",
+          "properties": {
+            "histogram": {
+              "$ref": "common.schema.json#/$defs/histogram"
+            },
+            "provenance": {
+              "$ref": "common.schema.json#/$defs/provenance"
+            }
+          }
+        }
+      }
+    },
+    "cities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "city",
+          "state",
+          "firms",
+          "roles",
+          "precision"
+        ],
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "longitude": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "precision": {
+            "const": "city"
+          },
+          "coordinate_source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "e.g. directory.json anchors; a gazetteer only if approved."
+          },
+          "firms": {
+            "type": "integer"
+          },
+          "roles": {
+            "type": "integer"
+          },
+          "ai_roles": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "lca_positions": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "baselines": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "boston_all"
+      ],
+      "properties": {
+        "boston_all": {
+          "type": "object",
+          "required": [
+            "soc_major",
+            "firms",
+            "roles",
+            "provenance"
+          ],
+          "properties": {
+            "soc_major": {
+              "type": "array",
+              "items": {
+                "$ref": "common.schema.json#/$defs/soc_share"
+              }
+            },
+            "firms": {
+              "type": "integer"
+            },
+            "roles": {
+              "type": "integer"
+            },
+            "weighting": {
+              "$ref": "#/$defs/weighting"
+            },
+            "provenance": {
+              "$ref": "common.schema.json#/$defs/provenance"
+            }
+          }
+        },
+        "by_bucket": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "tier_rule": {
+      "type": "object",
+      "properties": {
+        "cutoff": {
+          "type": "integer"
+        },
+        "text_cutoff": {
+          "type": "integer"
+        },
+        "stability_curve": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "roles": {
+                "type": "integer"
+              },
+              "firms": {
+                "type": "integer"
+              },
+              "median_similarity": {
+                "type": "number"
+              },
+              "p25": {
+                "type": "number"
+              },
+              "p75": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/provenance"
+        }
+      }
+    },
+    "research_layer": {
+      "type": "object",
+      "required": [
+        "source",
+        "records",
+        "note"
+      ],
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "public/ecosystem/directory.json (unchanged)"
+        },
+        "records": {
+          "type": "integer"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "filter_coverage": {
+      "type": "object",
+      "description": "Known vs total per filter, shown on every filter option (Unknown is a value, not zero).",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "known",
+          "total"
+        ],
+        "properties": {
+          "known": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

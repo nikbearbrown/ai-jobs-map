@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jobs.humanitarians.ai/schemas/ai-job-map/crosswalk-v1.json",
+  "title": "AI job map: employer crosswalk row (v1, implemented)",
+  "description": "One row per (firm, source identity). Entity resolution is most of the work: DOL files carry names and addresses, not tax ids; the same employer appears under several names; parents file for offices. Low-confidence rows go to human review and are not used on public pages until reviewed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "firm_id",
+    "source_id",
+    "source_key",
+    "source_name",
+    "match_method",
+    "confidence",
+    "status"
+  ],
+  "properties": {
+    "firm_id": {
+      "type": "string"
+    },
+    "source_id": {
+      "type": "string",
+      "description": "ai-jobs-live, directory, dol-lca, dol-perm, uscis-hub, sec-edgar, sec-form-d, irs-eo"
+    },
+    "source_key": {
+      "type": "string",
+      "description": "company_id, directory id, normalised employer name + postal code, CIK, etc."
+    },
+    "source_name": {
+      "type": "string",
+      "description": "Name exactly as the source writes it."
+    },
+    "source_address": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "match_method": {
+      "enum": [
+        "same-record",
+        "exact-name",
+        "normalised-name",
+        "normalised-name+postal-code",
+        "domain",
+        "trade-name-dba",
+        "uscis-tax-id-last4-tiebreak",
+        "manual"
+      ]
+    },
+    "confidence": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "status": {
+      "enum": [
+        "auto-accepted",
+        "needs-review",
+        "reviewed-accepted",
+        "reviewed-rejected"
+      ]
+    },
+    "relationship": {
+      "enum": [
+        "same-entity",
+        "parent-files-for-office",
+        "subsidiary",
+        "unknown"
+      ],
+      "default": "same-entity"
+    },
+    "reviewed_on": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "note": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}
