@@ -1,0 +1,15 @@
+# Verification log: who checked which number, claim, figure or table, against what, and what they found.
+#
+#   check_id         V-nnnn
+#   checker          name, as in paper/roster.yaml
+#   date             YYYY-MM-DD
+#   item             what was checked, with where it appears (section and paragraph, figure or table)
+#   item_type        claim | figure | table | number
+#   checked_against  the output it was checked against: file, step, run folder and code commit
+#   outcome          match | mismatch | could-not-check
+#   change_made      the commit or note that fixed a mismatch, or null
+#   notes            anything else
+#
+# Most checks reveal results, so they are open only to people the roster clears.
+
+[]

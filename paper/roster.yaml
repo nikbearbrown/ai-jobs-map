@@ -1,0 +1,19 @@
+# Roster: who is lead author, who rates, and whose ratings are complete.
+#
+# ONLY THE LEAD AUTHOR EDITS THIS FILE. The /contribute skill and the branch runner read it and never write it.
+# Anyone not listed is treated as a rater whose ratings are incomplete: they get no results and no branch runs.
+# No rater pseudonyms appear here or anywhere in this repo.
+#
+#   name              as the person signs their work
+#   role              lead-author | contributor
+#   rater             true if they rate firms for the study
+#   ratings_complete  true | false when rater is true; null otherwise. Copied from the rating system's
+#                     completion flag, which is the source of truth once it exists
+#   set_by, set_on    who last changed this entry, and when
+
+- name: Nik Bear Brown
+  role: lead-author
+  rater: false
+  ratings_complete: null
+  set_by: Nik Bear Brown
+  set_on: 2026-11-22

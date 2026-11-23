@@ -1,0 +1,5 @@
+# The default branch: no overrides. Every other branch is compared with a BR-0000 run at the same code commit.
+branch_id: BR-0000
+proposal_id: null
+decision_point: null
+overrides: {}

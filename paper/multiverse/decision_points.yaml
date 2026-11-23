@@ -1,0 +1,1296 @@
+# Decision-point registry for the AI job map paper.
+#
+# Every analytic choice in pipeline/ai_job_map is listed here, one entry per choice. Contributors own a point,
+# research how others made the same choice, and propose alternatives (paper/multiverse/templates/proposal.md).
+# The group decides which alternatives run; accepted ones run as branches (pipeline/multiverse, run with
+# `python3 -I pipeline/run.py branch BR-nnnn`). Cut for reasons, never for results.
+#
+# Read with yaml.safe_load. Words such as yes, no, on and off are quoted, because YAML reads them as true and
+# false. `python3 -I pipeline/run.py check-registry` checks this file against the config.
+#
+# Field guide
+#   id               DP-nn, stable forever. A retired point keeps its id with status: closed.
+#   title            Short name.
+#   description      Plain language: what the choice is and why it matters.
+#   current_value    What the pipeline does today (always a string).
+#   default_status   settled | provisional. Provisional = an open lead-author decision; the current value is
+#                    the comparison point for branches until it is decided.
+#   kind             config | mixed | hard-coded | dead-key | not-implemented, as found in the Phase 0 audit
+#                    (before the Phase 2 refactor moved hard-coded choices into the config).
+#   location         Where it lives: config key, or repo-relative file and function.
+#   parameters       The config keys a branch may override for this point. For each:
+#                      key           dotted path into pipeline/ai_job_map/config/config.json
+#                      form          value (any value of the same type) | list (a list of the same element
+#                                    type) | switch (only the listed variants, which are the ones the code
+#                                    implements; a new variant is a code change, reviewed with its proposal)
+#                      variants      for a switch
+#                      allowed       for a list whose elements must come from a fixed set
+#                      must_include  elements a list may not drop
+#                      minimum       lowest number allowed
+#                      origin        existing | new-in-phase-2 (was hard-coded) | wired-in-phase-2 (was a
+#                                    config key the code never read)
+#                    Locked and not-built points list their keys too, so an override of them is refused
+#                    with the reason.
+#   rationale        Why the current value was chosen, from the code and the job map reports. "Not recorded"
+#                    means nobody wrote one down; finding the reason is a contributor task.
+#   precedent        Published work that made this choice. Empty = not yet researched.
+#   affects          Outputs that change when this changes.
+#   analyses         ecosystem (ecosystem.json), firm-profiles (firms/*.json), crosswalk (SOC).
+#   feeds_study      How this reaches the confirmatory firm-classifier study, if at all: sampling-frame,
+#                    packet-content, label-space, baseline-b, ai-share-strata, indirect (changes role counts or
+#                    AI share upstream), none.
+#   locked           true = no branch may change it.
+#   lock_reason      Why, if locked.
+#   branchable       now | not-built | locked. not-built = nothing to vary yet.
+#   owner            Contributor name once someone owns it (the /contribute skill sets it).
+#   status           open | owned | closed.
+
+- id: DP-01
+  title: Counting unit (role key)
+  description: What counts as one role. Postings at the same firm with the same normalised title and the same set
+    of locations count once, however many boards or reposts carry them.
+  current_value: firm + normalised title + normalised location set; text roles also split by a hash of the requirement
+    text
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/core.py role_key(), pipeline/ai_job_map/build.py main() steps 1 and 3 (role keys)]
+  parameters:
+  - key: dedup.role_key_fields
+    form: list
+    allowed: [firm, title, locations]
+    must_include: [firm]
+    origin: new-in-phase-2
+  - key: dedup.text_role_adds_text_hash
+    form: switch
+    variants: [true]
+    origin: new-in-phase-2
+  rationale: One job advertised many times should count once. Text roles also split by requirement text, so two
+    different jobs sharing a title stay separate.
+  precedent: []
+  affects: [every role count, tiers, hiring shape, size proxy, all aggregates]
+  analyses: [ecosystem, firm-profiles, crosswalk]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-02
+  title: Title normalisation for deduplication
+  description: How job titles are cleaned before deciding two postings are the same role. Level words such as Senior
+    and Junior are kept, so a senior and a junior opening are different roles.
+  current_value: 'lowercase; keep letters, digits, + and #; keep level words; drop requisition tokens (regex in
+    config) and a trailing -ft or -pt'
+  default_status: settled
+  kind: mixed
+  location: ['config: dedup.requisition_token', pipeline/ai_job_map/core.py norm_role_title()]
+  parameters:
+  - {key: dedup.requisition_token, form: value, origin: existing}
+  - key: dedup.keep_level_words
+    form: switch
+    variants: [true]
+    origin: new-in-phase-2
+  - {key: dedup.keep_chars, form: value, origin: new-in-phase-2}
+  rationale: Senior and junior openings are different jobs. Requisition numbers would make one role look like many.
+  precedent: []
+  affects: [role counts]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-03
+  title: Drop trailing -ft / -pt from titles
+  description: Whether "Engineer-FT" and "Engineer" are the same title.
+  current_value: dropped
+  default_status: settled
+  kind: dead-key
+  location: ['config: dedup.trailing_employment_suffix (never read)', pipeline/ai_job_map/core.py norm_role_title()]
+  parameters:
+  - {key: dedup.trailing_employment_suffix, form: value, origin: wired-in-phase-2}
+  rationale: Not recorded.
+  precedent: []
+  affects: [role counts]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-04
+  title: Remote locations
+  description: How remote postings are grouped. Any location mentioning "remote" becomes one remote value, so a
+    remote job posted to ten cities counts once.
+  current_value: contains 'remote' -> remote:us or remote:<rest>
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/core.py norm_location_set()]
+  parameters:
+  - {key: dedup.remote_pattern, form: value, origin: new-in-phase-2}
+  - key: dedup.collapse_remote
+    form: switch
+    variants: [true]
+    origin: new-in-phase-2
+  rationale: Remote postings list locations inconsistently.
+  precedent: []
+  affects: [role counts, remote counts]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-05
+  title: Weighting of ecosystem figures
+  description: Whether each firm counts once in ecosystem figures, or each role does. Role weighting lets one very
+    large hirer dominate.
+  current_value: firm-weighted
+  default_status: settled
+  kind: dead-key
+  location: ['config: aggregation.default_weighting (never read)', pipeline/ai_job_map/build.py main() step 9 (ecosystem
+      aggregates)]
+  parameters:
+  - key: aggregation.default_weighting
+    form: switch
+    variants: [firm]
+    origin: wired-in-phase-2
+  rationale: Decision C in the job map Phase 1 approval. One firm (Domino's) holds 43% of collected records.
+  precedent: []
+  affects: [signal-by-bucket matrix, Boston baseline, bucket baselines]
+  analyses: [ecosystem]
+  feeds_study: none
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-06
+  title: Figures without the largest firm
+  description: Role-weighted figures are also reported without the single firm with the most roles.
+  current_value: 1 firm left out (the one with the most distinct roles)
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/build.py main() step 9 (signal-type matrix)]
+  parameters:
+  - {key: aggregation.exclude_largest_n, form: value, minimum: 0, origin: new-in-phase-2}
+  rationale: Decision C. A neutral rule for one dominant hirer, rather than a named exclusion.
+  precedent: []
+  affects: [matrix role counts]
+  analyses: [ecosystem]
+  feeds_study: none
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-07
+  title: Firm inclusion
+  description: Which firms are in the job map at all.
+  current_value: every firm in the live collection (730), tiered
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/build.py main() step 1 (every firm in the live collection)]
+  parameters: []
+  rationale: Decision A in the job map Phase 1 approval.
+  precedent: []
+  affects: [everything]
+  analyses: [ecosystem, firm-profiles, crosswalk]
+  feeds_study: sampling-frame
+  locked: true
+  lock_reason: Defines which firms can be sampled into the classifier's test set.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-08
+  title: Boards left out of the AI corpus
+  description: Job boards whose posting text is not used for AI measures, because the text was fetched only for
+    postings picked by title.
+  current_value: smartrecruiters, workable
+  default_status: settled
+  kind: config
+  location: ['config: ai_relatedness.exclude_providers_from_corpus']
+  parameters:
+  - {key: ai_relatedness.exclude_providers_from_corpus, form: list, origin: existing}
+  rationale: Text on these boards was fetched only for postings chosen by title, so the sample is selected on titles.
+  precedent: []
+  affects: [AI corpus, every AI measure, which firms get an AI section]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: sampling-frame
+  locked: true
+  lock_reason: Defines which firms have evidence, and so the test set's population.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-09
+  title: Snapshot records used
+  description: Which saved postings with text enter the AI corpus.
+  current_value: state is live, has text blocks, joins the live collection
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/build.py main() step 3 (text snapshot join)]
+  parameters: []
+  rationale: Not recorded.
+  precedent: []
+  affects: [AI corpus]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: sampling-frame
+  locked: true
+  lock_reason: Defines which firms have evidence for packets.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-10
+  title: Boston-area definition
+  description: Which Massachusetts towns count as the Boston area.
+  current_value: 51 towns
+  default_status: settled
+  kind: config
+  location: ['config: geography.boston_area']
+  parameters:
+  - {key: geography.boston_area, form: list, origin: existing}
+  rationale: An editable list; only towns with a reviewed map anchor are drawn.
+  precedent: []
+  affects: [in_boston_area flag, Boston baseline]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: none
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-11
+  title: Boston baseline membership
+  description: Which firms make up the Boston comparison group.
+  current_value: Tier A firms with at least one role in a listed town
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/build.py main() step 9 (Boston baseline)]
+  parameters:
+  - {key: baselines.boston_min_roles_in_area, form: value, minimum: 1, origin: new-in-phase-2}
+  - key: baselines.boston_tiers
+    form: list
+    allowed: [A, B]
+    origin: new-in-phase-2
+  rationale: Not recorded.
+  precedent: []
+  affects: [Boston baseline shape]
+  analyses: [ecosystem]
+  feeds_study: none
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-12
+  title: What counts as a heading in a job ad
+  description: How the pipeline recognises a section heading, so it can drop "About us" and benefits text and keep
+    the requirements.
+  current_value: at most 70 characters (config), at most 8 words and no final full stop (code); curly quotes are
+    straightened before patterns are matched
+  default_status: settled
+  kind: mixed
+  location: ['config: requirements_text.heading_max_chars', pipeline/ai_job_map/core.py requirement_blocks() (heading
+      test)]
+  parameters:
+  - {key: requirements_text.heading_max_chars, form: value, origin: existing}
+  rationale: Not recorded.
+  precedent: []
+  affects: [everything downstream of requirement text]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: packet-content
+  locked: true
+  lock_reason: Defines the text in an evidence packet.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-13
+  title: Drop and keep heading patterns
+  description: Which headings mark text to drop (benefits, EEO, about us) and which mark text to keep (responsibilities,
+    qualifications).
+  current_value: 30 drop patterns, 41 keep patterns
+  default_status: settled
+  kind: config
+  location: ['config: requirements_text.drop_heading_patterns', 'config: requirements_text.keep_heading_patterns']
+  parameters:
+  - {key: requirements_text.drop_heading_patterns, form: list, origin: existing}
+  - {key: requirements_text.keep_heading_patterns, form: list, origin: existing}
+  rationale: Not recorded.
+  precedent: []
+  affects: [requirement text]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: packet-content
+  locked: true
+  lock_reason: Defines the text in an evidence packet.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-14
+  title: Keep rule
+  description: If a posting has any keep heading, only text under keep headings survives; otherwise everything not
+    under a drop heading survives.
+  current_value: as described
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/core.py requirement_blocks() (keep and drop rule)]
+  parameters: []
+  rationale: Not recorded.
+  precedent: []
+  affects: [requirement text]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: packet-content
+  locked: true
+  lock_reason: Defines the text in an evidence packet.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-15
+  title: Firm repetition drop
+  description: Text a firm repeats across most of its postings is treated as boilerplate.
+  current_value: drop a block repeated in at least 30% of a firm's postings, when the firm has at least 5
+  default_status: settled
+  kind: config
+  location: ['config: requirements_text.firm_repetition_drop']
+  parameters:
+  - {key: requirements_text.firm_repetition_drop, form: value, origin: existing}
+  rationale: Not recorded.
+  precedent: []
+  affects: [requirement text]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: packet-content
+  locked: true
+  lock_reason: Defines the text in an evidence packet.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-16
+  title: Postings without recognised headings
+  description: What happens to a posting whose headings the pipeline doesn't recognise.
+  current_value: kept and flagged (6,160 roles)
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/core.py requirement_blocks(), 'pipeline/ai_job_map/build.py main() step 3 (unsectioned
+      roles kept, flagged)']
+  parameters: []
+  rationale: Dropping them would silently remove firms whose ads use unusual headings.
+  precedent: []
+  affects: [AI corpus size]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: packet-content
+  locked: true
+  lock_reason: Defines the text in an evidence packet.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-17
+  title: Skill phrase length
+  description: Skills are short phrases taken from requirement text. This sets the longest phrase.
+  current_value: 1 to 3 words
+  default_status: settled
+  kind: config
+  location: ['config: skills.max_ngram']
+  parameters:
+  - {key: skills.max_ngram, form: value, minimum: 1, origin: existing}
+  rationale: Babina et al. used a commercial skills taxonomy (Burning Glass) that we don't have; short phrases from
+    requirement lines stand in for it.
+  precedent: ['Babina, Fedyk, He & Hodson (2024), Journal of Financial Economics 151:103745 (method; their skills
+      come from a curated taxonomy)']
+  affects: [vocabulary, w(s), omega]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-18
+  title: Minimum skill support
+  description: How common a phrase must be before it counts as a skill. Rare phrases give noisy AI-relatedness scores.
+  current_value: at least 20 roles, at least 3 firms, at most 30% of roles
+  default_status: provisional
+  kind: config
+  location: ['config: skills.min_support_roles', 'config: skills.min_support_firms', 'config: skills.max_doc_share']
+  parameters:
+  - {key: skills.min_support_roles, form: value, minimum: 1, origin: existing}
+  - {key: skills.min_support_firms, form: value, minimum: 1, origin: existing}
+  - {key: skills.max_doc_share, form: value, minimum: 0, origin: existing}
+  rationale: Open decision 3 in the job map Phase 2 report, which recommends raising the firm minimum to 5 or 10.
+  precedent: []
+  affects: [vocabulary, w(s), omega]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-19
+  title: Stoplist
+  description: Common words that can't be skills on their own.
+  current_value: 140 words
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/core.py STOP]
+  parameters:
+  - {key: skills.stoplist, form: list, origin: new-in-phase-2}
+  rationale: Not recorded. Phase 2 found "deep" on the list had removed "deep learning".
+  precedent: []
+  affects: [vocabulary]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-20
+  title: Tokeniser and phrase breaks
+  description: How text is split into words, and where a phrase can't cross (punctuation, line breaks).
+  current_value: two regular expressions
+  default_status: settled
+  kind: hard-coded
+  location: ['pipeline/ai_job_map/core.py TOKEN, SEGMENT']
+  parameters:
+  - {key: skills.token_pattern, form: value, origin: new-in-phase-2}
+  - {key: skills.segment_pattern, form: value, origin: new-in-phase-2}
+  rationale: Not recorded.
+  precedent: []
+  affects: [vocabulary]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-21
+  title: Skill aliases
+  description: Spellings treated as the same skill, such as ML and machine learning.
+  current_value: 5 word aliases, 3 phrase aliases
+  default_status: settled
+  kind: config
+  location: ['config: skills.token_alias', 'config: skills.ngram_alias']
+  parameters:
+  - {key: skills.token_alias, form: value, origin: existing}
+  - {key: skills.ngram_alias, form: value, origin: existing}
+  rationale: Not recorded.
+  precedent: []
+  affects: [vocabulary, seed matching]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-22
+  title: Seed masking
+  description: Phrases that contain part of a seed skill (for example "learning" from "machine learning") are not
+    allowed as skills, because they would co-occur with the seed by construction.
+  current_value: 'masked: a phrase containing part of a seed is never a candidate skill'
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/core.py ngrams_of_text()]
+  parameters:
+  - key: skills.mask_seed_fragments
+    form: switch
+    variants: ['on', 'off']
+    origin: new-in-phase-2
+  rationale: Without masking, the top skills by w(s) were fragments of the seeds (job map Phase 2 report).
+  precedent: []
+  affects: [w(s)]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-23
+  title: Minimum skills for an AI score
+  description: A role needs at least this many vocabulary skills to get an AI-relatedness score. Roles with fewer
+    are counted, not scored.
+  current_value: 3 (143 roles don't get a score)
+  default_status: settled
+  kind: config
+  location: ['config: skills.min_skills_for_omega']
+  parameters:
+  - {key: skills.min_skills_for_omega, form: value, minimum: 1, origin: existing}
+  rationale: Not recorded.
+  precedent: []
+  affects: [which roles get omega]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-24
+  title: Seed skills
+  description: The skills that define "AI". Every other skill's AI-relatedness is how often it appears alongside
+    these.
+  current_value: machine learning, deep learning, natural language processing, computer vision, large language models,
+    generative AI
+  default_status: settled
+  kind: config
+  location: ['config: ai_relatedness.seed_skills']
+  parameters:
+  - {key: ai_relatedness.seed_skills, form: list, origin: existing}
+  rationale: Chosen for this pipeline after Babina et al. (2024). Matched on requirement text, never on titles.
+  precedent: ['Babina, Fedyk, He & Hodson (2024), Journal of Financial Economics 151:103745']
+  affects: [w(s), omega, every AI measure]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: ai-share-strata
+  locked: true
+  lock_reason: Locked until the preregistration says whether the test set is stratified by AI share.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-25
+  title: AI threshold
+  description: How high a role's AI-relatedness score must be for the role to count as AI-related.
+  current_value: omega > 0.1 (95% of scored roles pass)
+  default_status: provisional
+  kind: config
+  location: ['config: ai_relatedness.threshold']
+  parameters:
+  - {key: ai_relatedness.threshold, form: value, origin: existing}
+  rationale: Open decision 1 in the job map Phase 2 report. 0.1 was set for Burning Glass skills; here it is a starting
+    value.
+  precedent: ['Babina, Fedyk, He & Hodson (2024), Journal of Financial Economics 151:103745']
+  affects: [AI-related flag, builds, uses-tools, firm AI share, AI histograms]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: ai-share-strata
+  locked: true
+  lock_reason: Locked until the preregistration says whether the test set is stratified by AI share.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-26
+  title: How a role's AI score combines its skills
+  description: A role's AI-relatedness is the average of its skills' scores. A maximum or a top-k average would
+    weight a single strong AI skill more.
+  current_value: mean of w(s)
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/core.py omega()]
+  parameters:
+  - key: ai_relatedness.omega_aggregate
+    form: switch
+    variants: [mean]
+    origin: new-in-phase-2
+  rationale: The mean follows the job map's method after Babina et al. (2024).
+  precedent: ['Babina, Fedyk, He & Hodson (2024), Journal of Financial Economics 151:103745']
+  affects: [omega]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-27
+  title: Signal-type term lists
+  description: The words that mark a role as building AI, integrating AI, or using AI tools.
+  current_value: builds 28 terms, integrates 21, uses-tools 12
+  default_status: settled
+  kind: config
+  location: ['config: signal_types']
+  parameters:
+  - {key: signal_types.builds, form: list, origin: existing}
+  - {key: signal_types.integrates, form: list, origin: existing}
+  - {key: signal_types.uses_tools, form: list, origin: existing}
+  rationale: Not recorded beyond the job map Phase 1 spec's examples.
+  precedent: []
+  affects: [signal types, signal-by-bucket matrix]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: none
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-28
+  title: Signal-type order
+  description: How the three signal types are assigned when more than one could apply. Today "integrates" doesn't
+    require the role to be AI-related, while "builds" does.
+  current_value: builds = AI-related and a builds term; integrates = an integrates term and not builds; uses-tools
+    = only for roles not otherwise AI
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/core.py signal_types()]
+  parameters:
+  - key: signal_types.integrates_requires_ai_related
+    form: switch
+    variants: [false]
+    origin: new-in-phase-2
+  - key: signal_types.order
+    form: switch
+    variants: [builds>integrates>uses_tools]
+    origin: new-in-phase-2
+  rationale: The job map Phase 1 spec table. Why integrates doesn't require AI-related is not recorded.
+  precedent: []
+  affects: [signal types]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: none
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-29
+  title: Label used for the AI stability curve
+  description: The text tier cutoff is chosen by how stable a firm's AI-label mix is between random halves of its
+    roles. This sets that label.
+  current_value: builds > integrates > ai-other > uses-tools > not-ai
+  default_status: settled
+  kind: hard-coded
+  location: ['pipeline/ai_job_map/build.py main() step 4, ai_label()']
+  parameters: []
+  rationale: Not recorded.
+  precedent: []
+  affects: [text tier cutoff, which firms get an AI section]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: sampling-frame
+  locked: true
+  lock_reason: Part of the cutoff rule (DP-37) that decides which firms are measured.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-30
+  title: Title-map rows accepted
+  description: Which rows of the O*NET title map are trusted when giving a job title an occupation code.
+  current_value: status unique, rolled-up or decided
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/soc.py TitleMap]
+  parameters:
+  - {key: soc.accepted_statuses, form: list, origin: new-in-phase-2}
+  rationale: Not recorded.
+  precedent: []
+  affects: [SOC coverage (36%)]
+  analyses: [ecosystem, firm-profiles, crosswalk]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-31
+  title: SOC title normaliser
+  description: How a job title is cleaned before it is looked up in the occupation title map.
+  current_value: strips level words at the edges, mode words, everything after a dash, comma or "at"
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/soc.py make_norm_title()]
+  parameters:
+  - {key: soc.level_edge_words, form: list, origin: new-in-phase-2}
+  - {key: soc.mode_words, form: list, origin: new-in-phase-2}
+  - {key: soc.cut_pattern, form: value, origin: new-in-phase-2}
+  rationale: Copied from A New Shape for Work so the two projects code titles the same way. Adopting a change here
+    means changing that repo too.
+  precedent: []
+  affects: [SOC coverage]
+  analyses: [ecosystem, firm-profiles, crosswalk]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-32
+  title: Trailing-phrase fallback
+  description: When a full title isn't in the map, try its last few words (for example "Senior Data Engineer, Platform"
+    -> "data engineer").
+  current_value: longest tail of at least 2 words
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/soc.py TitleMap.assign_with_method()]
+  parameters:
+  - {key: soc.min_tail_words, form: value, minimum: 1, origin: new-in-phase-2}
+  rationale: Not recorded.
+  precedent: []
+  affects: [SOC coverage]
+  analyses: [ecosystem, firm-profiles, crosswalk]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-33
+  title: Visa-filing title dictionary
+  description: Visa filings pair employers' job titles with occupation codes. A title joins the dictionary when
+    enough filings and employers agree on its code.
+  current_value: at least 5 filings, at least 3 employers, at least 70% agree
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/soc.py lca_title_dictionary(), pipeline/ai_job_map/build.py main() step 2]
+  parameters:
+  - {key: soc.lca_dictionary.min_filings, form: value, minimum: 1, origin: new-in-phase-2}
+  - {key: soc.lca_dictionary.min_employers, form: value, minimum: 1, origin: new-in-phase-2}
+  - {key: soc.lca_dictionary.min_agreement, form: value, minimum: 0, origin: new-in-phase-2}
+  rationale: Not recorded.
+  precedent: []
+  affects: [SOC coverage (8, 896 roles)]
+  analyses: [ecosystem, firm-profiles, crosswalk]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-34
+  title: Shape used for tier stability
+  description: The tier cutoff is chosen by how stable a firm's hiring mix is between random halves of its roles.
+    This sets which mix is used.
+  current_value: SOC major group (hiring tier); AI label (text tier)
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/build.py main() step 5 (stability curves)]
+  parameters: []
+  rationale: Not recorded.
+  precedent: []
+  affects: [both cutoffs]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: sampling-frame
+  locked: true
+  lock_reason: Part of the tier cutoff rule (DP-36), which defines Tier A.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-35
+  title: Split-half settings
+  description: How many random half-splits, the random seed, and the role-count bins used to measure stability.
+  current_value: 200 splits, seed 20261122, 12 bins
+  default_status: settled
+  kind: config
+  location: ['config: tier.splits_per_firm', 'config: tier.random_seed', 'config: tier.role_count_bins']
+  parameters:
+  - {key: tier.splits_per_firm, form: value, origin: existing}
+  - {key: tier.random_seed, form: value, origin: existing}
+  - {key: tier.role_count_bins, form: list, origin: existing}
+  rationale: Not recorded.
+  precedent: []
+  affects: [both cutoffs]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: sampling-frame
+  locked: true
+  lock_reason: Part of the tier cutoff rule (DP-36), which defines Tier A.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-36
+  title: Tier cutoff rule
+  description: How many distinct roles a firm needs before its hiring shape is reported as measured (Tier A).
+  current_value: 200 roles (95 firms in Tier A)
+  default_status: provisional
+  kind: mixed
+  location: ['config: tier.plateau_min_roles, within_plateau, max_next_gain, fallback_cutoff', pipeline/ai_job_map/core.py
+      choose_cutoff()]
+  parameters:
+  - {key: tier.plateau_min_roles, form: value, origin: existing}
+  - {key: tier.within_plateau, form: value, origin: existing}
+  - {key: tier.max_next_gain, form: value, origin: existing}
+  - {key: tier.fallback_cutoff, form: value, origin: existing}
+  rationale: Open decision 2 in the job map Phase 2 report. The split-half curve keeps rising with size, so the
+    plateau rule is weak; the report recommends an absolute target of 0.70 (40 roles, 334 firms).
+  precedent: []
+  affects: [Tier A, every measured section]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: sampling-frame
+  locked: true
+  lock_reason: The classifier's Tier A rule uses this cutoff to define who can be sampled.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-37
+  title: Tier and AI-section gate
+  description: Which firms get measured sections. Tier A needs the role cutoff; an AI section also needs enough
+    roles with text.
+  current_value: Tier A = distinct roles >= cutoff; AI section also needs text roles >= text cutoff (200), so 47
+    firms
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/core.py assign_tier(), pipeline/ai_job_map/build.py main() step 8 (AI section needs
+      the text cutoff)]
+  parameters: []
+  rationale: Not recorded.
+  precedent: []
+  affects: [which firms get measured sections]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: sampling-frame
+  locked: true
+  lock_reason: Defines which firms can be sampled.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-38
+  title: Employer-name normalisation
+  description: How company names on visa filings are cleaned (legal suffixes such as Inc and LLC removed) before
+    matching them to firms.
+  current_value: 21 legal-suffix words removed
+  default_status: settled
+  kind: hard-coded
+  location: ['pipeline/ai_job_map/core.py norm_employer(), SUFFIX']
+  parameters: []
+  rationale: Not recorded.
+  precedent: []
+  affects: [visa-filing matches]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: packet-content
+  locked: true
+  lock_reason: Decides which filings, and so which reported industry codes, go into a firm's packet.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-39
+  title: Visa-filing match fields
+  description: Which name fields on a filing are matched against firm names.
+  current_value: EMPLOYER_NAME or TRADE_NAME_DBA, against live-collection names and the company list
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/lca.py (employer and trade-name match)]
+  parameters: []
+  rationale: Not recorded.
+  precedent: []
+  affects: [visa-filing matches]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: packet-content
+  locked: true
+  lock_reason: Decides which filings go into a firm's packet.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-40
+  title: Low-confidence matches
+  description: Name matches that are probably wrong are held for review and left out of counts.
+  current_value: key under 4 characters, in a 15-word generic list, or shared by more than one firm (5 rows held)
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/build.py main() step 6 (low-confidence matches)]
+  parameters: []
+  rationale: Not recorded.
+  precedent: []
+  affects: [visa counts, NAICS, buckets]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: packet-content
+  locked: true
+  lock_reason: Decides which filings go into a firm's packet.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-41
+  title: Employer tax ID (EMPLOYER_FEIN)
+  description: Visa filings carry the employer's federal tax ID, which could merge name variants of one company.
+  current_value: not used
+  default_status: provisional
+  kind: not-implemented
+  location: [pipeline/ai_job_map/lca.py (never stored)]
+  parameters: []
+  rationale: Open decision 4 in the job map Phase 2 report.
+  precedent: []
+  affects: [could merge name variants]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: packet-content
+  locked: false
+  lock_reason: null
+  branchable: not-built
+  owner: null
+  status: open
+
+- id: DP-42
+  title: Visa case statuses counted
+  description: Which outcomes of a visa filing count toward a firm's filing totals.
+  current_value: Certified, Certified - Withdrawn
+  default_status: settled
+  kind: config
+  location: ['config: visa_display.case_statuses_counted']
+  parameters:
+  - {key: visa_display.case_statuses_counted, form: list, origin: existing}
+  rationale: Withdrawn and Denied are shown separately, not counted (job map Phase 1 spec).
+  precedent: []
+  affects: [visa counts]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-43
+  title: Count positions, not cases
+  description: One filing can cover several positions. This counts positions.
+  current_value: positions
+  default_status: settled
+  kind: dead-key
+  location: ['config: visa_display.count_positions_not_cases (never read)', 'pipeline/ai_job_map/build.py main()
+      step 8, units()']
+  parameters:
+  - key: visa_display.count_positions_not_cases
+    form: switch
+    variants: [true, false]
+    origin: wired-in-phase-2
+  rationale: Job map Phase 1 spec.
+  precedent: []
+  affects: [visa counts]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-44
+  title: Missing position count
+  description: What a filing counts as when its number of positions is blank.
+  current_value: 1 position
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/build.py to_int(), 'pipeline/ai_job_map/build.py main() step 8, units()']
+  parameters:
+  - {key: visa_display.missing_positions_default, form: value, minimum: 0, origin: new-in-phase-2}
+  rationale: Not recorded.
+  precedent: []
+  affects: [visa counts]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: indirect
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-45
+  title: Visa recency window
+  description: Counting only the last 24 months of filings.
+  current_value: not computed (lca_positions_24m is always null)
+  default_status: settled
+  kind: not-implemented
+  location: ['config: visa_display.recency_window_months (never read)', pipeline/ai_job_map/build.py main() step
+      8 (lca_positions_24m is always null)]
+  parameters:
+  - {key: visa_display.recency_window_months, form: value, origin: existing}
+  rationale: In the spec, never built.
+  precedent: []
+  affects: [not computed]
+  analyses: [firm-profiles]
+  feeds_study: none
+  locked: false
+  lock_reason: null
+  branchable: not-built
+  owner: null
+  status: open
+
+- id: DP-46
+  title: Minimum decisions for a rate
+  description: Showing approval rates only for firms with at least 10 decisions.
+  current_value: no rates are computed
+  default_status: settled
+  kind: not-implemented
+  location: ['config: visa_display.min_decisions_for_rates (never read)']
+  parameters:
+  - {key: visa_display.min_decisions_for_rates, form: value, origin: existing}
+  rationale: In the spec, never built.
+  precedent: []
+  affects: [not computed]
+  analyses: [firm-profiles]
+  feeds_study: none
+  locked: false
+  lock_reason: null
+  branchable: not-built
+  owner: null
+  status: open
+
+- id: DP-47
+  title: AI postings x visa filings join
+  description: For a firm's AI-related roles, how many visa positions were filed in the same occupations.
+  current_value: positions in the SOCs of a firm's AI-related text roles, over the whole filing window (the spec
+    says 24 months)
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/build.py main() step 8 (ai_soc_positions)]
+  parameters:
+  - key: visa_display.ai_soc_join_window
+    form: switch
+    variants: [all]
+    origin: new-in-phase-2
+  rationale: The 24-month window in the spec isn't built (DP-45).
+  precedent: []
+  affects: [ai_soc_positions]
+  analyses: [firm-profiles]
+  feeds_study: none
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-48
+  title: Firm industry code (NAICS)
+  description: A firm's industry is the code it reports most often on its visa filings, weighted by positions.
+  current_value: modal NAICS over counted filings, weighted by positions
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/build.py main() step 8 (modal NAICS)]
+  parameters: []
+  rationale: Job map Phase 1 spec (NAICS from filings as the sector backbone).
+  precedent: []
+  affects: [bucket]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: baseline-b
+  locked: true
+  lock_reason: Part of baseline (b), the rule-based sector the classifier is compared with.
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-49
+  title: Sector buckets (NAICS roll-up)
+  description: The 16 sector buckets and which industry codes fall into each.
+  current_value: 16 buckets, 71 prefixes, 2017 and 2022 codes side by side; longest prefix of at least 2 digits
+    wins
+  default_status: settled
+  kind: config
+  location: [pipeline/ai_job_map/config/naics-buckets.csv, pipeline/ai_job_map/core.py naics_bucket()]
+  parameters:
+  - {key: sector.buckets_csv, form: value, origin: existing}
+  rationale: Bear's 16-bucket taxonomy (life sciences split out, GICS used only as a check).
+  precedent: []
+  affects: [bucket (413 firms), treemap, matrix columns]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: label-space
+  locked: true
+  lock_reason: The label space raters and models use. After the pilot, changes go only through codebook versioning
+    (hard rule 7).
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-50
+  title: IT Services to Software reassignment
+  description: Some firms report an IT-services code but hire like software companies. This rule moves them.
+  current_value: at most 10% client-site positions, at most 5 worksite cities, at least 40% software-development
+    roles; kept as IT Services if 30% client-site, 20 cities, or H-1B dependent
+  default_status: settled
+  kind: mixed
+  location: ['config: sector.it_services_to_software', 'config: sector.it_services_keep', pipeline/ai_job_map/build.py
+      main() step 8 (IT-services reassignment)]
+  parameters:
+  - {key: sector.it_services_to_software, form: value, origin: existing}
+  - {key: sector.it_services_keep, form: value, origin: existing}
+  rationale: Bear's note on evidence-based reassignments.
+  precedent: []
+  affects: [bucket]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: baseline-b
+  locked: true
+  lock_reason: Part of baseline (b).
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-51
+  title: R&D code routing
+  description: Firms that report a research-and-development code are routed to life sciences, semiconductors or
+    engineering by what they hire for.
+  current_value: at least 30% share; order life sciences > semiconductors > engineering
+  default_status: settled
+  kind: mixed
+  location: ['config: sector.rnd_codes', 'config: sector.rnd_route', pipeline/ai_job_map/build.py main() step 8
+      (R&D routing)]
+  parameters:
+  - {key: sector.rnd_codes, form: list, origin: existing}
+  - {key: sector.rnd_route, form: value, origin: existing}
+  rationale: Not recorded.
+  precedent: []
+  affects: [bucket]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: baseline-b
+  locked: true
+  lock_reason: Part of baseline (b).
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-52
+  title: Sector-source order
+  description: Which source wins when several give a firm's industry.
+  current_value: listed as DOL LCA, SEC SIC, Form D, inferred; only LCA is used
+  default_status: settled
+  kind: not-implemented
+  location: ['config: sector.source_precedence (never read)']
+  parameters:
+  - {key: sector.source_precedence, form: list, origin: existing}
+  rationale: The other sources are approved but not downloaded.
+  precedent: []
+  affects: [bucket]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: baseline-b
+  locked: false
+  lock_reason: null
+  branchable: not-built
+  owner: null
+  status: open
+
+- id: DP-53
+  title: Application tag definitions
+  description: The seven application tags (such as fintech or climate tech) and two life-sciences subtags, each
+    defined by a term list.
+  current_value: 7 tags and 2 subtags
+  default_status: settled
+  kind: config
+  location: ['config: application_tags.tags', 'config: application_tags.life_sciences_subtags']
+  parameters:
+  - {key: application_tags.tags, form: value, origin: existing}
+  - {key: application_tags.life_sciences_subtags, form: value, origin: existing}
+  rationale: Not recorded.
+  precedent: []
+  affects: [firm tags]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: label-space
+  locked: true
+  lock_reason: The label space raters and models use. After the pilot, changes go only through codebook versioning
+    (hard rule 7).
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-54
+  title: Firm tag rule
+  description: How many of a firm's roles must match a tag before the firm gets the tag.
+  current_value: at least 3 roles and at least 10% of text roles; subtags need only 3 roles; the share counts all
+    text roles
+  default_status: settled
+  kind: mixed
+  location: ['config: application_tags.min_roles', 'config: application_tags.min_share_of_text_roles', pipeline/ai_job_map/build.py
+      main() step 8 (application tags)]
+  parameters:
+  - {key: application_tags.min_roles, form: value, origin: existing}
+  - {key: application_tags.min_share_of_text_roles, form: value, origin: existing}
+  rationale: Not recorded.
+  precedent: []
+  affects: [firm tags]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: baseline-b
+  locked: true
+  lock_reason: Part of baseline (b).
+  branchable: locked
+  owner: null
+  status: open
+
+- id: DP-55
+  title: Lifecycle labels and cutoffs
+  description: Labels such as young company or established, from facts like incorporation date. No size cutoff is
+    defined yet.
+  current_value: proposed only (young company = 7 years or less); every firm is "not-classified"
+  default_status: settled
+  kind: not-implemented
+  location: ['docs/ai-job-map/phase-1/ai-job-map.config.proposed.json:140-148', pipeline/ai_job_map/build.py main()
+      step 8 (org_label is always not-classified)]
+  parameters: []
+  rationale: Fact sources (Form D, EDGAR, IRS) are approved but not downloaded.
+  precedent: []
+  affects: [org label]
+  analyses: [firm-profiles]
+  feeds_study: none
+  locked: false
+  lock_reason: null
+  branchable: not-built
+  owner: null
+  status: open
+
+- id: DP-56
+  title: Postings already open on day one
+  description: Postings that were already listed when collection started have an unknown start date, so they are
+    left out of how long postings stay open.
+  current_value: left out of durations
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/build.py main() step 8 (posting dynamics)]
+  parameters:
+  - key: dynamics.exclude_first_day
+    form: switch
+    variants: [true]
+    origin: new-in-phase-2
+  rationale: Their start date is unknown (left-censored).
+  precedent: []
+  affects: [days open]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: none
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open
+
+- id: DP-57
+  title: Relisting rule
+  description: When a posting counts as the same job put up again.
+  current_value: new posting id, same firm, title, locations and ad hash, first seen after the earlier one's last
+    day
+  default_status: settled
+  kind: hard-coded
+  location: [pipeline/ai_job_map/core.py relisted_roles()]
+  parameters:
+  - key: dynamics.relist_match_fields
+    form: list
+    allowed: [firm, title, locations, hash]
+    origin: new-in-phase-2
+  - {key: dynamics.relist_min_gap_days, form: value, minimum: 0, origin: new-in-phase-2}
+  rationale: Job map Phase 1 spec. Possible only on boards that carry an ad hash.
+  precedent: []
+  affects: [relisted roles]
+  analyses: [ecosystem, firm-profiles]
+  feeds_study: none
+  locked: false
+  lock_reason: null
+  branchable: now
+  owner: null
+  status: open

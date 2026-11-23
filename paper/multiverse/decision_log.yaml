@@ -1,0 +1,19 @@
+# Decision log for the multiverse analysis. APPEND-ONLY: every change of status is a new event at the end of this
+# file. Nothing is edited or deleted; a correction is a new event whose `corrects` names the event it corrects.
+#
+#   event_id       E-nnnn, in order
+#   proposal_id    P-nnnn (paper/multiverse/proposals/)
+#   decision_point DP-nn
+#   alternative    one line, as the proposer stated it
+#   proposer       contributor name (paper/roster.yaml)
+#   status         proposed | accepted | rejected | run | adopted
+#   reason         required for rejected; the lead author's words for accepted, rejected and adopted
+#   decided_by     the lead author for accepted, rejected and adopted; "runner" for run; the proposer for proposed
+#   date           UTC, ISO 8601
+#   results_seen   before | after: whether any run of this proposal had finished before this event. Computed
+#                  from the run records by `pipeline/run.py log-event`, whatever was typed. null for run events.
+#   results_link   the run folder, for run events
+#   corrects       the event_id this event corrects, or null
+#
+# Cut for reasons, never for results. A rejection after results were seen is flagged in the supplement, and every
+# run goes in the supplement whether or not it was adopted.

@@ -1,0 +1,80 @@
+# Key results: the numbers every branch is compared on, and the rule that says when a branch has "flipped" one.
+#
+# PROVISIONAL. The lead author signs these off before the first branch other than BR-0000 runs: a flip rule
+# written after seeing results doesn't count. Until signed_off_by names the lead author in paper/roster.yaml, the
+# runner runs only BR-0000 (the default).
+#
+# Each result is read from the run's ecosystem.json; nothing is added to the build. Values at the default
+# (v1, 2026-11-22) are given in `default_note` for orientation only; the runner always compares a branch with a
+# fresh BR-0000 run at the same code commit.
+#
+# Flip rules
+#   none            report the change; it never counts as a flip
+#   crosses         the value is on the other side of `threshold` than the default
+#   order-changes   the ranked list differs from the default
+#   top-changes     the top item (or the set of tied top items) differs from the default, in any group
+
+status: provisional
+signed_off_by: null
+signed_off_on: null
+
+results:
+- id: KR-01
+  title: Tier A firms
+  read: {from: step_counts, step_prefix: "tiers: firms -> Tier A", value: out}
+  flip_rule: none
+  default_note: 95 of 730 firms (cutoff 200 distinct roles)
+
+- id: KR-02
+  title: Share of scored roles that are AI-related
+  read: {from: step_counts, step_prefix: "ai: roles with omega -> AI-related", value: out_over_in}
+  flip_rule: crosses
+  threshold: 0.5
+  default_note: 42,825 of 45,167 (94.8%)
+
+- id: KR-03
+  title: Seed-skill base rate (text roles naming a seed skill)
+  read: {from: step_counts, step_prefix: "ai: text roles -> roles naming a seed skill", value: out_over_in}
+  flip_rule: none
+  default_note: 7,631 of 45,310 (16.8%)
+
+- id: KR-04
+  title: Firms with an AI section
+  read: {from: firms_measured}
+  flip_rule: none
+  default_note: "47"
+
+- id: KR-05
+  title: Signal types ranked by the number of measured firms with at least one such role
+  read: {from: signal_type_firms}
+  flip_rule: order-changes
+  default_note: builds 43, integrates 42, uses_tools 0
+
+- id: KR-06
+  title: Most common signal type in each sector bucket with at least 5 measured firms
+  read: {from: top_signal_type_by_bucket, min_measured_firms: 5}
+  flip_rule: top-changes
+  default_note: >-
+    it-services integrates (9 vs 8); software-internet tied builds/integrates (8 each); industrials tied (4 each).
+    Two of three buckets are tied at the default, so this result moves with one firm.
+
+- id: KR-07
+  title: Share of distinct roles with an occupation code
+  read: {from: step_counts, step_prefix: "live: distinct roles -> SOC by title", value: out_over_in}
+  flip_rule: none
+  default_note: 38,008 of 104,652 (36.3%)
+
+- id: KR-08
+  title: Top three occupation groups among Boston-area Tier A firms (firm-weighted, unassigned titles left out)
+  read: {from: boston_top_groups, n: 3}
+  flip_rule: top-changes
+  default_note: >-
+    15-0000 Computer and Mathematical, 13-0000 Business and Financial Operations, 11-0000 Management (32 firms).
+    The Phase 1 draft compared Boston with all Tier A firms, but ecosystem.json has no all-Tier-A shape, so only
+    the Boston half is read.
+
+- id: KR-09
+  title: Firms with a sector bucket, and the largest bucket by firms
+  read: {from: sector_buckets}
+  flip_rule: top-changes
+  default_note: 413 of 730 bucketed; largest it-services (138 firms)

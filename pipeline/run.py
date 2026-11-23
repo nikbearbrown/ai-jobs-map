@@ -2,7 +2,10 @@
 
     python3 -I pipeline/run.py lca      # extract matching LCA rows (slow, ~1 GB of xlsx)
     python3 -I pipeline/run.py build    # derive everything into data/ai-job-map/v1
-    python3 -I pipeline/run.py test     # unit tests
+    python3 -I pipeline/run.py test     # unit tests (add --full on this Mac to also rebuild and check BR-0000 = main)
+    python3 -I pipeline/run.py check-registry               # the decision-point registry agrees with the config
+    python3 -I pipeline/run.py branch BR-0001 [--as NAME]   # run one multiverse branch (paper/multiverse/)
+    python3 -I pipeline/run.py log-event --proposal P-0001 ...   # append a decision event (proposed, accepted, ...)
     python3 -I pipeline/run.py label    # local labeling page for the review sample (127.0.0.1:8794)
 """
 import os
@@ -24,7 +27,13 @@ elif cmd == "label":
     sys.exit(label.main(sys.argv[2:]))
 elif cmd == "test":
     import unittest
-    suite = unittest.defaultTestLoader.discover(os.path.join(ROOT, "pipeline", "ai_job_map", "tests"), top_level_dir=ROOT)
+    if "--full" in sys.argv[2:]:
+        os.environ["AI_JOB_MAP_FULL_TESTS"] = "1"
+    suite = unittest.TestSuite(unittest.defaultTestLoader.discover(os.path.join(ROOT, "pipeline", d, "tests"), top_level_dir=ROOT)
+                               for d in ("ai_job_map", "multiverse"))
     sys.exit(0 if unittest.TextTestRunner(verbosity=1).run(suite).wasSuccessful() else 1)
+elif cmd in ("check-registry", "branch", "log-event"):
+    from pipeline.multiverse import cli
+    sys.exit(cli.main(cmd, sys.argv[2:]))
 else:
     sys.exit(f"unknown command {cmd}")
