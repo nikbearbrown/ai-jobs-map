@@ -1,0 +1,11 @@
+# One verification-log entry, written with `python3 -I pipeline/run.py log-verification`.
+# Items that carry results are checked only by people `status` clears.
+
+checker: ""              # their name
+item: ""                 # ASK: what they checked, and where it appears (section and paragraph, figure or table)
+item_type: ""            # claim | figure | table | number
+checked_against: ""      # ASK: the output they compared it with: file, step, run folder and code commit
+outcome: ""              # match | mismatch | could-not-check: their finding, not yours
+change_made: null        # the commit or note that fixed a mismatch
+notes: ""                # their words, if anything else matters
+confirmed_by_checker: false       # true only via --confirmed

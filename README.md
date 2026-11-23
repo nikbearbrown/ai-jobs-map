@@ -5,6 +5,7 @@ The data and the paper behind the AI jobs map: which organizations hire for AI, 
 * **`pipeline/ai_jobs_map/`** builds firm records, ecosystem aggregates and the employer crosswalk from job postings, H-1B wage filings (LCA) and O*NET titles. Python standard library only. Every output is checked against the schemas in `pipeline/ai_jobs_map/schemas/`.
 * **`pipeline/multiverse/`** is the paper's branch runner: each contributor-proposed alternative to an analytic choice runs as its own branch, with full provenance.
 * **`paper/`** holds the contributor guide ([CONTRIBUTING-paper.md](paper/CONTRIBUTING-paper.md)), the roster, the decision-point registry and the logs.
+* **`.claude/skills/contribute/`** is the `/contribute` skill. In Claude Code, a contributor types `/contribute`, or says they want to work on the paper, and it guides them through owning a decision point under the paper's rules.
 
 ## Running it
 

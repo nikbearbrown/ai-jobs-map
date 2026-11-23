@@ -404,8 +404,8 @@ class TestSkillFiles(unittest.TestCase):
             if rel.endswith("fixtures/example-session.md"):
                 continue      # the example's files live in its throwaway repo
             for path in re.findall(r"`((?:paper|pipeline|\.claude)/[A-Za-z0-9_./-]+)`", text):
-                if re.search(r"NNNN|nnnn|-nn\b|\bNN\b|<|\*", path) or path in LOCKED_PATHS_FLOOR:
-                    continue
+                if re.search(r"NNNN|nnnn|-nn\b|\bNN\b|<|\*", path) or path in LOCKED_PATHS_FLOOR + ("paper/multiverse/runs/",):
+                    continue      # placeholders, the study's reserved paths, and the git-ignored run folders
                 self.assertTrue(os.path.exists(os.path.join(ROOT, path.rstrip("/"))), f"{rel} names {path}")
 
     def test_the_fixture_is_labelled_and_shows_the_three_required_events(self):

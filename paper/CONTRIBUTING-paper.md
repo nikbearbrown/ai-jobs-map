@@ -132,4 +132,6 @@ Every analysis is built from choices: what counts as one role, how common a phra
 
 **Cut for reasons, never for results.** An alternative is rejected only for a reason that doesn't depend on its result. Every branch that runs goes in the supplement, and a branch that flips a finding is reported as a flip whether or not it is adopted.
 
-**Raters: finish your ratings first.** Branch results are results. Until the [roster](roster.yaml) marks your ratings complete, you can research decision points and write proposals, but not run branches or interpret them.
+**With Claude Code, run /contribute.** It walks you through these steps, runs the tools, and asks you questions about your drafts. It never writes your rationale or interpretation, never helps with rating, and never approves anything. Without Claude Code, the same steps use `python3 -I pipeline/run.py` commands, listed in `pipeline/multiverse/contribute.py`.
+
+**Raters: finish your ratings first.** Branch results are results. Until the [roster](roster.yaml) marks your ratings complete, you can research decision points and write proposals, but not run branches or interpret them. Until then, also stay out of the run folders, the interpretations, other people's proposals, the decision log's reasons and the key results' notes, which hold the default values. `python3 -I pipeline/run.py key-results` lists the key results without them.

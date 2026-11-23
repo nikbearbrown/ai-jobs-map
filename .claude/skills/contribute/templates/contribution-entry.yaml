@@ -1,0 +1,10 @@
+# One contribution-log entry, written with `python3 -I pipeline/run.py log-contribution`.
+# For each field: where its value comes from. Run once without --confirmed, show the entry, then with --confirmed.
+
+contributor: ""          # their name, as they gave it in step 1 (the roster's spelling if they're listed)
+task: ""                 # ASK: "In a sentence or two, what did you do this session?" Their words, unchanged.
+credit_roles: []         # from the task's row in task-menu.md; they may add one if they did more. One of the 14 CRediT roles.
+counts_as: ""            # component | writing | acknowledgment (from task-menu.md), or none if no task moved forward
+artifacts: []            # files they wrote, decision-log event ids, commits: facts, which you list
+ai_assistance: ""        # YOUR account of what you did this session, factually: "Claude Code /contribute: ..."
+confirmed_by_contributor: false   # true only via --confirmed, after they've read the entry
