@@ -13,11 +13,29 @@ from collections import Counter, defaultdict
 from datetime import datetime, timezone
 
 from . import core
-from .soc import TitleMap, lca_title_dictionary, major, major_title, soc6
+from .soc import TitleMap, lca_title_dictionary, major, major_title, make_norm_title, soc6
 from .validate import validate
 
 HERE = os.path.dirname(__file__)
 STEPS = []
+
+# Switch parameters (decision points whose alternatives need code): the variants this build implements. A branch
+# may pick only one of these; a new variant is a code change, reviewed with its proposal. The registry
+# (paper/multiverse/decision_points.yaml) lists the same variants, and a test keeps the two in step.
+IMPLEMENTED = {
+    "dedup.text_role_adds_text_hash": [True],
+    "dedup.keep_level_words": [True],
+    "dedup.collapse_remote": [True],
+    "aggregation.default_weighting": ["firm"],
+    "skills.mask_seed_fragments": ["on", "off"],
+    "ai_relatedness.omega_aggregate": ["mean"],
+    "signal_types.integrates_requires_ai_related": [False],
+    "signal_types.order": ["builds>integrates>uses_tools"],
+    "visa_display.count_positions_not_cases": [True, False],
+    "visa_display.ai_soc_join_window": ["all"],
+    "dynamics.exclude_first_day": [True],
+}
+SIGNAL_TYPES = ("builds", "integrates", "uses_tools")
 
 
 def step(name, n_in, n_out, **excluded):
@@ -60,15 +78,39 @@ def to_int(v, default=1):
         return default
 
 
-def main():
-    cfg = json.load(open(os.path.join(HERE, "config", "config.json")))
-    cfg_sha = sha_file(os.path.join(HERE, "config", "config.json"))
+def config_sha256(cfg):
+    """SHA-256 of the config as canonical JSON (sorted keys, no spaces), so the same settings always hash the same
+    however the file is laid out, and a branch with an empty override hashes the same as the main build."""
+    return hashlib.sha256(json.dumps(cfg, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
+def check_implemented(cfg):
+    for key, variants in IMPLEMENTED.items():
+        node = cfg
+        for part in key.split("."):
+            node = node[part]
+        if node not in variants:
+            raise ValueError(f"{key} = {node!r} is not implemented (implemented: {variants})")
+
+
+def main(cfg=None, out_dir=None, private_outputs=True):
+    """Build the job map. With no arguments: the config file, into inputs.output_dir, as always. The branch runner
+    passes an effective config and its own run folder, and private_outputs=False (no labeling packet)."""
+    STEPS.clear()
+    if cfg is None:
+        cfg = json.load(open(os.path.join(HERE, "config", "config.json")))
+    check_implemented(cfg)
+    cfg_sha = config_sha256(cfg)
     inp = cfg["inputs"]
-    out_dir = inp["output_dir"]
+    out_dir = out_dir or inp["output_dir"]
     computed_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     os.makedirs(os.path.join(out_dir, "firms"), exist_ok=True)
     os.makedirs(os.path.join(out_dir, "review"), exist_ok=True)
-    req_pat = cfg["dedup"]["requisition_token"]
+    dd = cfg["dedup"]
+    req_pat = dd["requisition_token"]
+    title_opts = {"suffix_pattern": dd["trailing_employment_suffix"], "keep_chars": dd["keep_chars"]}
+    loc_opts = {"remote_pattern": dd["remote_pattern"]}
+    key_opts = {"req_pattern": req_pat, "fields": tuple(dd["role_key_fields"]), "title_opts": title_opts, "loc_opts": loc_opts}
     live_from, live_to = inp["live_collection_observed"]
     snap_date = inp["text_snapshot_date"]
 
@@ -102,7 +144,7 @@ def main():
         live_by_firm[r["firm"]].append(r)
     roles = {}
     for r in live:
-        k = core.role_key(r["firm"], r["title"], r.get("locations"), None, req_pat)
+        k = core.role_key(r["firm"], r["title"], r.get("locations"), None, **key_opts)
         e = roles.get(k)
         if e is None:
             e = roles[k] = {"firm": r["firm"], "title": r["title"], "locations": r.get("locations") or [], "first_seen": r["first_seen"],
@@ -111,14 +153,17 @@ def main():
         e["last_seen"] = max(e["last_seen"], r["last_seen"])
         e["open"] = e["open"] or r["status"] == "open"
         e["postings"] += 1
-    step("live: postings -> distinct roles (firm + normalised title + location set)", len(live), len(roles))
+    step("live: postings -> distinct roles (" + " + ".join({"firm": "firm", "title": "normalised title", "locations": "location set"}[x]
+                                                         for x in dd["role_key_fields"]) + ")", len(live), len(roles))
     firms = sorted(firm_names)
     firm_roles = defaultdict(list)
     for k in sorted(roles):
         firm_roles[roles[k]["firm"]].append(roles[k])
 
     # ------------------------------------------------------------ 2. SOC by title (O*NET title map, then LCA title dictionary)
-    tm = TitleMap(inp["onet_title_map"])
+    sc_ = cfg["soc"]
+    norm_title = make_norm_title(sc_["level_edge_words"], sc_["mode_words"], sc_["cut_pattern"])
+    tm = TitleMap(inp["onet_title_map"], sc_["accepted_statuses"], norm_title, sc_["min_tail_words"])
     lca_rows_all = []
     if os.path.exists(inp["lca_matched_cache"]):
         for l in gzip.open(inp["lca_matched_cache"], "rt"):
@@ -126,8 +171,10 @@ def main():
             for dk in ("RECEIVED_DATE", "DECISION_DATE"):
                 row[dk] = excel_date(row.get(dk))
             lca_rows_all.append(row)
-        tm.extra = lca_title_dictionary(lca_rows_all)
-        step("soc: LCA filed titles -> title dictionary (>=5 filings, >=3 employers, >=70% agree)", len(lca_rows_all), len(tm.extra))
+        ld = sc_["lca_dictionary"]
+        tm.extra = lca_title_dictionary(lca_rows_all, ld["min_filings"], ld["min_employers"], ld["min_agreement"], norm_title)
+        step(f"soc: LCA filed titles -> title dictionary (>={ld['min_filings']} filings, >={ld['min_employers']} employers, "
+             f">={ld['min_agreement']:.0%} agree)", len(lca_rows_all), len(tm.extra))
     onet_titles = {}
     occ_path = os.path.join(os.path.dirname(os.path.dirname(inp["onet_title_map"])), "source", "onet-31.0", "Occupation Data.txt")
     if os.path.exists(occ_path):
@@ -179,7 +226,7 @@ def main():
             unsectioned += not sectioned
             text = "\n".join(kept)
             req_sha = hashlib.sha256(re.sub(r"\s+", " ", text.lower()).encode()).hexdigest()
-            k = core.role_key(firm, base["title"], base.get("locations"), req_sha, req_pat)
+            k = core.role_key(firm, base["title"], base.get("locations"), req_sha if dd["text_role_adds_text_hash"] else None, **key_opts)
             if k not in text_roles:
                 text_roles[k] = {"firm": firm, "title": base["title"], "text": text, "posting_id": pid, "blocks": blocks}
     step("snapshot: postings -> requirement text -> distinct text roles", kept_posts, len(text_roles),
@@ -190,7 +237,10 @@ def main():
     sk = cfg["skills"]
     rids = sorted(text_roles, key=lambda k: text_roles[k]["posting_id"])
     seeds = cfg["ai_relatedness"]["seed_skills"]
-    role_ngrams = {i: core.ngrams_of_text(text_roles[k]["text"], sk["max_ngram"], sk["token_alias"], sk["ngram_alias"], seeds) for i, k in enumerate(rids)}
+    ng_opts = {"stop": set(sk["stoplist"]), "token_re": re.compile(sk["token_pattern"]), "segment_re": re.compile(sk["segment_pattern"]),
+               "mask_seeds": sk["mask_seed_fragments"] == "on"}
+    role_ngrams = {i: core.ngrams_of_text(text_roles[k]["text"], sk["max_ngram"], sk["token_alias"], sk["ngram_alias"], seeds, **ng_opts)
+                   for i, k in enumerate(rids)}
     role_firm = {i: text_roles[k]["firm"] for i, k in enumerate(rids)}
     vocab = core.build_vocabulary(role_ngrams, role_firm, sk["min_support_roles"], sk["min_support_firms"], sk["max_doc_share"])
     seeds = cfg["ai_relatedness"]["seed_skills"]
@@ -200,7 +250,7 @@ def main():
     del role_ngrams
     w = core.compute_w(role_skills, seeds)
     thr = cfg["ai_relatedness"]["threshold"]
-    rx = {t: core.term_regex(terms) for t, terms in cfg["signal_types"].items()}
+    rx = {t: core.term_regex(cfg["signal_types"][t]) for t in SIGNAL_TYPES}
     tag_rx = {t: core.term_regex(terms) for t, terms in cfg["application_tags"]["tags"].items()}
     ls_rx = {t: core.term_regex(terms) for t, terms in cfg["application_tags"]["life_sciences_subtags"].items()}
     no_omega = 0
@@ -296,6 +346,12 @@ def main():
     vd = cfg["visa_display"]
     counted = set(vd["case_statuses_counted"])
 
+    def units(r):
+        """What one counted filing contributes: its positions (blank = the configured default), or 1 if counting cases."""
+        if not vd["count_positions_not_cases"]:
+            return 1
+        return to_int(r.get("TOTAL_WORKER_POSITIONS"), vd["missing_positions_default"])
+
     # ------------------------------------------------------------ 7. directory companies (self-description, ids)
     directory = json.load(open(inp["directory_json"]))
     dir_comp = {core.norm_employer(r["name"]): r for r in directory["records"] + directory["hubs"] if r["kind"] == "startup"}
@@ -304,7 +360,7 @@ def main():
 
     # ------------------------------------------------------------ 8. firm records
     companies = {r["company_id"]: r for r in csv.DictReader(open(inp["companies_csv"]))}
-    firm_records, index = {}, []
+    firm_records, index, boston_roles = {}, [], {}
     sector_counts = Counter()
     for f in firms:
         name = firm_names[f].most_common(1)[0][0]
@@ -332,6 +388,7 @@ def main():
                     cities[cs] += 1; got = True
             unparsed += not got
         in_boston = any(st == "MA" and c.lower() in boston for (c, st) in cities)
+        boston_roles[f] = sum(k for (c, st), k in cities.items() if st == "MA" and c.lower() in boston)
 
         # AI signals
         fps = live_by_firm[f]
@@ -371,11 +428,12 @@ def main():
                      "baselines": {"boston_all": "baselines.boston_all", "bucket_peers": None}, "assignment_basis": "title"}
 
         # dynamics
-        durs = [(core.days_between(x["first_seen"], x["last_seen"]), x["status"] == "gone") for x in fps if x["first_seen"] > live_from]
+        durs = [(core.days_between(x["first_seen"], x["last_seen"]), x["status"] == "gone") for x in fps if x["first_seen"] > live_from]   # dynamics.exclude_first_day
         closed = sorted(d for d, c in durs if c)
         hash_firm = any(x.get("description_sha256") for x in fps)
-        rel = core.relisted_roles([{"firm": f, "title": core.norm_role_title(x["title"], req_pat), "locs": core.norm_location_set(x.get("locations")),
-                                    "hash": x.get("description_sha256"), "source_id": x["source_id"], "first_seen": x["first_seen"], "last_seen": x["last_seen"]} for x in fps])
+        rel = core.relisted_roles([{"firm": f, "title": core.norm_role_title(x["title"], req_pat, **title_opts), "locs": core.norm_location_set(x.get("locations"), **loc_opts),
+                                    "hash": x.get("description_sha256"), "source_id": x["source_id"], "first_seen": x["first_seen"], "last_seen": x["last_seen"]} for x in fps],
+                                  fields=tuple(cfg["dynamics"]["relist_match_fields"]), min_gap_days=cfg["dynamics"]["relist_min_gap_days"])
         dyn = {"status": "measured", "provenance": prov(["live"], live_from, live_to, n_roles, cfg["method_versions"]["dynamics"],
                                                          notes="Postings first seen on the first collection day are left out (their start date is unknown)."),
                "median_days_open_observed": closed[len(closed) // 2] if closed else None, "median_days_open_km": core.km_median(durs),
@@ -392,7 +450,7 @@ def main():
         lca_pos = Counter()
         if lrows:
             cnt_rows = [r for r in lrows if r.get("CASE_STATUS") in counted]
-            pos = sum(to_int(r.get("TOTAL_WORKER_POSITIONS")) for r in cnt_rows)
+            pos = sum(units(r) for r in cnt_rows)
             by_status = Counter(r.get("CASE_STATUS") or "not stated" for r in lrows)
             wl = Counter()
             socc = Counter()
@@ -403,7 +461,7 @@ def main():
             dep = Counter()
             wcities = set()
             for r in cnt_rows:
-                p = to_int(r.get("TOTAL_WORKER_POSITIONS"))
+                p = units(r)
                 wl[r.get("PW_WAGE_LEVEL") or "not stated"] += p
                 socc[(r.get("SOC_CODE") or "")[:7]] += p
                 fy[fiscal_year(r.get("DECISION_DATE", ""))] += p
@@ -516,7 +574,8 @@ def main():
     rows_t = ["builds", "integrates", "uses_tools", "none"]
     cols = sorted({x["bucket"] for x in index if x["bucket"]}) + ["sector not measured"]
     measured = [x for x in index if x["ai_share"] is not None]
-    largest = max(index, key=lambda x: x["distinct_roles"])["firm_id"]
+    ag = cfg["aggregation"]
+    largest = {x["firm_id"] for x in sorted(index, key=lambda x: -x["distinct_roles"])[:ag["exclude_largest_n"]]}
     cells = []
     for rt in rows_t:
         row = []
@@ -524,7 +583,7 @@ def main():
             fs = [x for x in measured if (x["bucket"] or "sector not measured") == c and
                   ((x["signal_types"][rt] or 0) > 0 if rt != "none" else not any((x["signal_types"][k] or 0) > 0 for k in rows_t[:3]))]
             roles_n = sum((x["signal_types"][rt] or 0) if rt != "none" else x["text_roles"] for x in fs)
-            roles_nl = sum((x["signal_types"][rt] or 0) if rt != "none" else x["text_roles"] for x in fs if x["firm_id"] != largest)
+            roles_nl = sum((x["signal_types"][rt] or 0) if rt != "none" else x["text_roles"] for x in fs if x["firm_id"] not in largest)
             row.append({"firms": len(fs), "roles": roles_n, "roles_excluding_largest_firm": roles_nl})
         cells.append(row)
     hist = [0] * 10
@@ -545,7 +604,9 @@ def main():
         a = anchors.get(f"{c}, {s}")
         cities_out.append({"city": c, "state": s, "latitude": a[0] if a else None, "longitude": a[1] if a else None, "precision": "city",
                            "coordinate_source": "directory.json anchors" if a else None, "firms": len(v["firms"]), "roles": v["roles"], "ai_roles": None, "lca_positions": None})
-    bos = [f for f in tier_a if any(x["firm_id"] == f and x["in_boston_area"] for x in index)]
+    bl = cfg["baselines"]
+    tier_of = {x["firm_id"]: x["tier"] for x in index}
+    bos = [f for f in firms if tier_of[f] in bl["boston_tiers"] and boston_roles[f] >= bl["boston_min_roles_in_area"]]
 
     def firm_weighted_shape(fs):
         acc = Counter()
@@ -557,7 +618,7 @@ def main():
     eco = {
         "schema_version": "ecosystem-v1", "data_version": cfg["data_version"], "computed_at": computed_at, "config_sha256": cfg_sha,
         "inputs": [v for v in SRC.values()], "step_counts": STEPS, "firms": [{k: v for k, v in x.items() if k not in ("hiring_now", "company_list_sector")} for x in index],
-        "matrices": {"signal_type_by_bucket": {"weighting": "firm", "rows": rows_t, "columns": cols, "cells": cells,
+        "matrices": {"signal_type_by_bucket": {"weighting": ag["default_weighting"], "rows": rows_t, "columns": cols, "cells": cells,
                                                "provenance": prov(["snap"] + (["lca"] if "lca" in SRC else []), snap_date, snap_date, sum(x["text_roles"] for x in measured), cfg["method_versions"]["signal_types"],
                                                                   notes="Cells count firms with at least one role of the type; roles are also given without the largest firm.")}},
         "distributions": {"firm_ai_share": {"histogram": {"bin_edges": [i / 10 for i in range(11)], "counts": hist}, "firms_measured": len(measured),
@@ -566,7 +627,7 @@ def main():
                           "role_omega": {"histogram": {"bin_edges": [i / 10 for i in range(11)], "counts": omega_hist},
                                          "provenance": prov(["snap"], snap_date, snap_date, len(text_roles) - no_omega, cfg["method_versions"]["ai_relatedness"])}},
         "cities": cities_out,
-        "baselines": {"boston_all": {"soc_major": firm_weighted_shape(bos), "firms": len(bos), "roles": sum(len(firm_roles[f]) for f in bos), "weighting": "firm",
+        "baselines": {"boston_all": {"soc_major": firm_weighted_shape(bos), "firms": len(bos), "roles": sum(len(firm_roles[f]) for f in bos), "weighting": ag["default_weighting"],
                                      "provenance": prov(["live", "onet"], live_from, live_to, sum(len(firm_roles[f]) for f in bos), cfg["method_versions"]["soc"],
                                                         notes="Tier A firms with at least one role in a Boston-area town (config list).")},
                       "by_bucket": {b: {"soc_major": firm_weighted_shape([x["firm_id"] for x in index if x["bucket"] == b and x["tier"] == "A"])} for b in cols[:-1]}},
@@ -623,15 +684,17 @@ def main():
             wr.writerow([t["posting_id"], t["firm"], t["title"], f"{t['omega']:.3f}", t["sig"]["ai_related"], t["sig"]["builds"], t["sig"]["integrates"], t["sig"]["uses_tools"], t["seed_hit"], t["onet"] or "unassigned", ""])
     # Labeling packet: titles and ad text for the sampled roles, kept OUTSIDE the repo (ad text is never committed).
     # It carries no scores, flags or firm ids, so the labeler stays blind to the measure.
-    pdir = inp["private_review_dir"]
-    os.makedirs(pdir, exist_ok=True)
-    packet = {"name": "roles-sample-50", "snapshot_date": snap_date, "config_sha256": cfg_sha,
-              "roles": [{"n": i + 1, "posting_id": text_roles[k]["posting_id"], "title": text_roles[k]["title"],
-                         "requirement_text": role_text[k][0], "full_ad": role_text[k][1]} for i, k in enumerate(sample)]}
-    tmp = os.path.join(pdir, "roles-sample-50.packet.json.tmp")
-    with open(tmp, "w") as fh:
-        json.dump(packet, fh, ensure_ascii=False, indent=1)
-    os.replace(tmp, os.path.join(pdir, "roles-sample-50.packet.json"))
+    # Branch runs (private_outputs=False) never write it.
+    if private_outputs:
+        pdir = inp["private_review_dir"]
+        os.makedirs(pdir, exist_ok=True)
+        packet = {"name": "roles-sample-50", "snapshot_date": snap_date, "config_sha256": cfg_sha,
+                  "roles": [{"n": i + 1, "posting_id": text_roles[k]["posting_id"], "title": text_roles[k]["title"],
+                             "requirement_text": role_text[k][0], "full_ad": role_text[k][1]} for i, k in enumerate(sample)]}
+        tmp = os.path.join(pdir, "roles-sample-50.packet.json.tmp")
+        with open(tmp, "w") as fh:
+            json.dump(packet, fh, ensure_ascii=False, indent=1)
+        os.replace(tmp, os.path.join(pdir, "roles-sample-50.packet.json"))
     picks = rng.sample(sorted(tier_a), min(rv["random_tier_a_firms"], len(tier_a)))
     with open(os.path.join(rd, "tier-a-shapes-20.md"), "w") as fh:
         fh.write(f"# Hiring shapes of {len(picks)} random Tier A firms\n\nTier A = at least {cutoff} distinct roles. SOC by exact title match (O*NET 31.0). AI signals from the {snap_date} snapshot.\n\n")

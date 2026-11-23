@@ -26,7 +26,13 @@
 
   "dedup": {
     "requisition_token": "\\(?\\b(?:r|req|jr|job)?[-# ]?\\d{4,}\\b\\)?|#\\d+",
-    "trailing_employment_suffix": "-(?:ft|pt)$"
+    "trailing_employment_suffix": "-(?:ft|pt)\\s*$",
+    "keep_chars": "a-z0-9+#",
+    "keep_level_words": true,
+    "role_key_fields": ["firm", "title", "locations"],
+    "text_role_adds_text_hash": true,
+    "remote_pattern": "remote",
+    "collapse_remote": true
   },
 
   "requirements_text": {
@@ -43,13 +49,18 @@
     "max_doc_share": 0.3,
     "token_alias": { "ml": "machine learning", "nlp": "natural language processing", "llm": "large language models", "llms": "large language models", "genai": "generative ai" },
     "ngram_alias": { "large language model": "large language models", "gen ai": "generative ai", "neural network": "neural networks" },
-    "min_skills_for_omega": 3
+    "min_skills_for_omega": 3,
+    "stoplist": ["a", "ability", "able", "across", "all", "also", "an", "and", "any", "are", "as", "at", "bachelor", "bachelors", "be", "been", "both", "but", "by", "can", "could", "degree", "demonstrated", "e", "each", "eg", "environment", "environments", "equivalent", "etc", "excellent", "experience", "experiences", "familiarity", "field", "fields", "five", "for", "from", "g", "good", "great", "hands", "has", "have", "help", "helping", "i", "i.e", "ie", "if", "in", "include", "includes", "including", "into", "is", "it", "its", "knowledge", "least", "level", "levels", "make", "making", "master", "masters", "may", "minimum", "more", "most", "must", "new", "of", "on", "one", "or", "other", "our", "per", "phd", "plus", "preferred", "proficiency", "proficient", "proven", "related", "relevant", "required", "requirement", "requirements", "role", "roles", "should", "similar", "skill", "skills", "so", "solid", "strong", "such", "team", "teams", "than", "that", "the", "their", "them", "then", "there", "these", "they", "this", "three", "to", "two", "understanding", "us", "use", "used", "using", "via", "was", "we", "well", "were", "what", "when", "where", "which", "while", "who", "will", "with", "within", "without", "work", "working", "would", "year", "years", "you", "your", "yours"],
+    "token_pattern": "[a-z0-9][a-z0-9+#.]*[a-z0-9+#]|[a-z0-9]",
+    "segment_pattern": "[;:,!?()\\[\\]{}•·|/]|\\.\\s|\\.$|\\s[-–—]\\s|\\n",
+    "mask_seed_fragments": "on"
   },
 
   "ai_relatedness": {
     "citation": "Babina, Fedyk, He & Hodson (2024), Journal of Financial Economics 151:103745",
     "seed_skills": ["machine learning", "deep learning", "natural language processing", "computer vision", "large language models", "generative ai"],
     "threshold": 0.1,
+    "omega_aggregate": "mean",
     "exclude_providers_from_corpus": ["smartrecruiters", "workable"],
     "exclude_reason": "Text was fetched only for postings chosen by title on these boards, so their text sample is selected on titles."
   },
@@ -57,7 +68,9 @@
   "signal_types": {
     "builds": ["model training", "train models", "training models", "train and deploy", "pretraining", "pre-training", "fine-tuning", "fine tuning", "finetuning", "rlhf", "reinforcement learning", "distributed training", "pytorch", "jax", "tensorflow", "model evaluation", "evals", "benchmarks", "ml research", "machine learning research", "neurips", "icml", "iclr", "cvpr", "model architecture", "model architectures", "inference optimization", "cuda"],
     "integrates": ["openai api", "anthropic api", "claude api", "llm api", "llm apis", "retrieval-augmented", "retrieval augmented", "rag", "vector database", "vector databases", "vector store", "embeddings", "langchain", "llamaindex", "function calling", "tool use", "ai agents", "agentic", "prompt engineering", "model context protocol", "mcp"],
-    "uses_tools": ["github copilot", "copilot", "chatgpt", "claude", "cursor", "gemini", "midjourney", "perplexity", "ai-assisted", "ai tools", "generative ai tools", "ai-powered tools"]
+    "uses_tools": ["github copilot", "copilot", "chatgpt", "claude", "cursor", "gemini", "midjourney", "perplexity", "ai-assisted", "ai tools", "generative ai tools", "ai-powered tools"],
+    "integrates_requires_ai_related": false,
+    "order": "builds>integrates>uses_tools"
   },
 
   "application_tags": {
@@ -102,6 +115,8 @@
     "case_statuses_counted": ["Certified", "Certified - Withdrawn"],
     "recency_window_months": 24,
     "min_decisions_for_rates": 10,
+    "missing_positions_default": 1,
+    "ai_soc_join_window": "all",
     "past_not_future_note": "This shows past filings, not future sponsorship decisions.",
     "not_covered_note": "There is no public employer-level data for O-1, L-1, TN or OPT employment. A firm missing here may still sponsor."
   },
@@ -111,6 +126,20 @@
     "boston_area_note": "Editable definition: Massachusetts towns in this list. Only towns with a reviewed anchor in directory.json are drawn on the map."
   },
 
-  "aggregation": { "default_weighting": "firm" },
+  "aggregation": { "default_weighting": "firm", "exclude_largest_n": 1 },
+  "baselines": { "boston_min_roles_in_area": 1, "boston_tiers": ["A"] },
+  "soc": {
+    "accepted_statuses": ["unique", "rolled-up", "decided"],
+    "level_edge_words": ["1", "2", "3", "4", "5", "entry", "entry-level", "experienced", "grad", "graduate", "i", "ii", "iii", "iv", "jr", "junior", "lead", "level", "mid", "mid-level", "new", "principal", "senior", "sr", "staff", "v"],
+    "mode_words": ["remote", "hybrid", "onsite", "on-site", "in-office", "full[- ]time", "part[- ]time", "per diem", "prn", "contract", "temporary", "temp"],
+    "cut_pattern": "\\s+[-–—|/]\\s+|,|\\s+at\\s+|\\s+@\\s+",
+    "min_tail_words": 2,
+    "lca_dictionary": {"min_filings": 5, "min_employers": 3, "min_agreement": 0.7}
+  },
+  "dynamics": { "exclude_first_day": true, "relist_match_fields": ["firm", "title", "locations", "hash"], "relist_min_gap_days": 1 },
+  "multiverse": {
+    "locked_paths": ["data/firm-classifier/", "paper/prereg/"],
+    "locked_paths_note": "Branch runs may never read these. Add the frozen test-set files here when the classifier study draws its test set."
+  },
   "review": { "random_roles": 50, "random_tier_a_firms": 20, "top_skills": 100, "seed": 20261122 }
 }

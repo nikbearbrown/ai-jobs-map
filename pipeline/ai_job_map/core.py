@@ -24,30 +24,44 @@ US_STATES = {
 US_ABBR = set(US_STATES.values())
 
 
-def norm_role_title(title, req_pattern=None):
+# Defaults are today's values; build.py passes the config's (decision points DP-01 to DP-04).
+TRAILING_EMPLOYMENT_SUFFIX = r"-(?:ft|pt)\s*$"
+TITLE_KEEP_CHARS = "a-z0-9+#"
+REMOTE_PATTERN = "remote"
+ROLE_KEY_FIELDS = ("firm", "title", "locations")
+
+
+def norm_role_title(title, req_pattern=None, suffix_pattern=TRAILING_EMPLOYMENT_SUFFIX, keep_chars=TITLE_KEEP_CHARS):
     """Light normalisation for distinct-role counting: keeps level words (Senior vs junior are different roles)."""
     t = (title or "").lower()
     if req_pattern:
         t = re.sub(req_pattern, " ", t)
-    t = re.sub(r"-(?:ft|pt)\s*$", " ", t)
-    t = re.sub(r"[^a-z0-9+#]+", " ", t)
+    if suffix_pattern:
+        t = re.sub(suffix_pattern, " ", t)
+    t = re.sub(f"[^{keep_chars}]+", " ", t)
     return re.sub(r"\s+", " ", t).strip()
 
 
-def norm_location_set(locations):
+def norm_location_set(locations, remote_pattern=REMOTE_PATTERN):
     out = set()
     for loc in locations or []:
         s = re.sub(r"\s+", " ", (loc or "").lower()).strip()
         if not s:
             continue
-        if "remote" in s:
-            s = "remote:" + ("us" if re.search(r"\b(us|usa|united states)\b", s) else re.sub(r"[^a-z]+", "", s.replace("remote", "")) or "any")
+        if re.search(remote_pattern, s):
+            s = "remote:" + ("us" if re.search(r"\b(us|usa|united states)\b", s) else re.sub(r"[^a-z]+", "", re.sub(remote_pattern, "", s)) or "any")
         out.add(s)
     return tuple(sorted(out))
 
 
-def role_key(firm_id, title, locations, req_sha=None, req_pattern=None):
-    return (firm_id, norm_role_title(title, req_pattern), norm_location_set(locations), req_sha or "")
+def role_key(firm_id, title, locations, req_sha=None, req_pattern=None, fields=ROLE_KEY_FIELDS, title_opts=None, loc_opts=None):
+    """(firm, normalised title, normalised location set, requirement-text hash). A field left out of `fields` is
+    blanked, so roles that differ only in it count once. The firm is always part of the key."""
+    if "firm" not in fields:
+        raise ValueError("the role key must include the firm")
+    t = norm_role_title(title, req_pattern, **(title_opts or {})) if "title" in fields else ""
+    locs = norm_location_set(locations, **(loc_opts or {})) if "locations" in fields else ()
+    return (firm_id, t, locs, req_sha or "")
 
 
 def parse_city_state(loc):
@@ -135,9 +149,9 @@ TOKEN = re.compile(r"[a-z0-9][a-z0-9+#.]*[a-z0-9+#]|[a-z0-9]")
 SEGMENT = re.compile(r"[;:,!?()\[\]{}•·|/]|\.\s|\.$|\s[-–—]\s|\n")
 
 
-def tokens(segment, token_alias):
+def tokens(segment, token_alias, token_re=TOKEN):
     out = []
-    for t in TOKEN.findall(segment.lower()):
+    for t in token_re.findall(segment.lower()):
         out.extend(token_alias[t].split() if t in token_alias else [t])
     return out
 
@@ -145,16 +159,16 @@ def tokens(segment, token_alias):
 SEED_MARK = "\x00seed"
 
 
-def ngrams_of_text(text, max_n, token_alias, ngram_alias, seeds=()):
+def ngrams_of_text(text, max_n, token_alias, ngram_alias, seeds=(), stop=STOP, token_re=TOKEN, segment_re=SEGMENT, mask_seeds=True):
     """Set of candidate skill n-grams: 1..max_n tokens, never crossing punctuation, never starting or ending with a
-    stopword, never pure digits. Seed phrases are found first and masked, so no candidate contains or splits a seed
-    (a fragment such as 'large language' would co-occur with its seed by construction). Seeds found are returned
-    as themselves."""
+    stopword, never pure digits. Seed phrases are found first and, with mask_seeds (the default), masked, so no
+    candidate contains or splits a seed (a fragment such as 'large language' would co-occur with its seed by
+    construction). Seeds found are returned as themselves."""
     found = set()
     seed_toks = sorted((s.split() for s in seeds), key=len, reverse=True)
     alias_multi = {tuple(k.split()): v.split() for k, v in ngram_alias.items()}
-    for seg in SEGMENT.split(text):
-        toks = tokens(seg, token_alias)
+    for seg in segment_re.split(text):
+        toks = tokens(seg, token_alias, token_re)
         # apply multi-word aliases (e.g. 'large language model' -> 'large language models') before seed matching
         i, out = 0, []
         while i < len(toks):
@@ -167,13 +181,13 @@ def ngrams_of_text(text, max_n, token_alias, ngram_alias, seeds=()):
         while i < len(toks):
             for st in seed_toks:
                 if toks[i:i + len(st)] == st:
-                    found.add(" ".join(st)); masked.append(SEED_MARK); i += len(st); break
+                    found.add(" ".join(st)); masked.extend([SEED_MARK] if mask_seeds else st); i += len(st); break
             else:
                 masked.append(toks[i]); i += 1
         for n in range(1, max_n + 1):
             for j in range(len(masked) - n + 1):
                 g = masked[j:j + n]
-                if SEED_MARK in g or g[0] in STOP or g[-1] in STOP or all(x.isdigit() for x in g):
+                if SEED_MARK in g or g[0] in stop or g[-1] in stop or all(x.isdigit() for x in g):
                     continue
                 s = " ".join(g)
                 found.add(ngram_alias.get(s, s))
@@ -337,17 +351,23 @@ def km_median(durations):
     return None
 
 
-def relisted_roles(postings):
+RELIST_FIELDS = ("firm", "title", "locations", "hash")
+_RELIST_KEY = {"firm": "firm", "title": "title", "locations": "locs", "hash": "hash"}
+
+
+def relisted_roles(postings, fields=RELIST_FIELDS, min_gap_days=1):
     """postings: list of dicts with key (firm,title,locs,hash), source_id, first_seen, last_seen. A role is relisted
-    when a later posting id with the same key appears after an earlier one's last_seen."""
+    when a later posting id with the same key (the `fields`) is first seen at least min_gap_days after an earlier
+    one's last_seen. Only postings with an ad hash are considered."""
     groups = defaultdict(list)
     for p in postings:
         if p["hash"]:
-            groups[(p["firm"], p["title"], p["locs"], p["hash"])].append(p)
+            groups[tuple(p[_RELIST_KEY[f]] for f in fields)].append(p)
     n = 0
     for ps in groups.values():
         ps.sort(key=lambda p: p["first_seen"])
-        if any(ps[i]["first_seen"] > max(q["last_seen"] for q in ps[:i]) and ps[i]["source_id"] not in {q["source_id"] for q in ps[:i]}
+        if any(days_between(max(q["last_seen"] for q in ps[:i]), ps[i]["first_seen"]) - 1 >= min_gap_days
+               and ps[i]["source_id"] not in {q["source_id"] for q in ps[:i]}
                for i in range(1, len(ps))):
             n += 1
     return n
