@@ -6,12 +6,13 @@ import os
 import re
 
 from .common import dump_yaml, load_yaml
+from .registry import load as load_registry
 
 STATUSES = ("proposed", "accepted", "rejected", "run", "adopted")
 DECISIONS = ("proposed", "accepted", "rejected", "adopted")
 LEAD_DECIDES = ("accepted", "rejected", "adopted")
 EVENT_FIELDS = ("event_id", "proposal_id", "decision_point", "alternative", "proposer", "status", "reason",
-                "decided_by", "date", "results_seen", "results_link", "corrects")
+                "decided_by", "date", "results_seen", "results_link", "corrects", "sections_sha256")
 
 
 class LogError(ValueError):
@@ -96,6 +97,24 @@ def run_finish_times(paths, events, proposal_id):
     return times
 
 
+def check_log(events):
+    """Problems that make the log ambiguous, e.g. after two checkouts' logs are merged by hand. The runner refuses
+    to run while there are any."""
+    probs, seen, proposed = [], set(), {}
+    by_id = {e.get("event_id"): e for e in events}
+    for e in events:
+        if e.get("event_id") in seen:
+            probs.append(f"event id {e.get('event_id')} appears more than once")
+        seen.add(e.get("event_id"))
+        if e.get("status") == "proposed":
+            proposed.setdefault(e.get("proposal_id"), []).append(e.get("event_id"))
+        c = e.get("corrects")
+        if c and (c not in by_id or by_id[c].get("status") == "run"):
+            probs.append(f"{e.get('event_id')} corrects {c}, which is missing or is a run")
+    probs += [f"{pid} was proposed more than once ({', '.join(ids)})" for pid, ids in proposed.items() if len(ids) > 1]
+    return probs
+
+
 def next_event_id(events):
     nums = [int(m.group(1)) for e in events if (m := re.match(r"^E-(\d{4})$", str(e.get("event_id", ""))))]
     return f"E-{(max(nums) + 1 if nums else 1):04d}"
@@ -123,10 +142,28 @@ def append_event(paths, event, now=None):
             raise LogError(f"only the lead author ({lead}) decides {st} events")
         if not (e["reason"] or "").strip():
             raise LogError(f"a {st} event needs the lead author's reason")
+    if os.path.exists(paths.registry):
+        point = next((p for p in load_registry(paths) if p.get("id") == e["decision_point"]), None)
+        if point is None:
+            raise LogError(f"{e['decision_point']} is not in the registry")
+        if point.get("locked"):
+            raise LogError(f"{e['decision_point']} is locked ({point.get('lock_reason')}); nothing about it goes in this log")
+    if e["corrects"]:
+        corrected = next((x for x in events if x.get("event_id") == e["corrects"]), None)
+        if st not in LEAD_DECIDES:
+            raise LogError("only the lead author's accepted, rejected or adopted events can correct an earlier event")
+        if corrected is not None and corrected.get("status") == "run":
+            raise LogError(f"{e['corrects']} is a run; runs are never set aside (every run goes in the supplement)")
+        if corrected is not None and corrected.get("proposal_id") != e["proposal_id"]:
+            raise LogError(f"{e['corrects']} is about {corrected.get('proposal_id')}, not {e['proposal_id']}")
     if st == "proposed":
         if not (e["proposer"] or "").strip() or not (e["alternative"] or "").strip():
             raise LogError("a proposed event needs the proposer and the alternative")
+        if first_event(events, e["proposal_id"], "proposed"):
+            raise LogError(f"{e['proposal_id']} is already proposed; a changed proposal is a new proposal")
         e["decided_by"] = e["proposer"]
+    else:
+        e["sections_sha256"] = None
     if st == "run":
         e["decided_by"] = "runner"
         if not e["results_link"]:

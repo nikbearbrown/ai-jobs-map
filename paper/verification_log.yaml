@@ -1,4 +1,5 @@
-# Verification log: who checked which number, claim, figure or table, against what, and what they found.
+# Verification log: who checked which number, claim, figure or table, against what, and what they found. Append
+# with `python3 -I pipeline/run.py log-verification` or the /contribute skill; never edit an earlier entry.
 #
 #   check_id         V-nnnn
 #   checker          name, as in paper/roster.yaml
@@ -9,6 +10,7 @@
 #   outcome          match | mismatch | could-not-check
 #   change_made      the commit or note that fixed a mismatch, or null
 #   notes            anything else
+#   confirmed_by_checker  true once the checker has read the entry
 #
 # Most checks reveal results, so they are open only to people the roster clears.
 

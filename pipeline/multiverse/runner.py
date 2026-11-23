@@ -1,6 +1,7 @@
 """The branch runner: `python3 -I pipeline/run.py branch BR-nnnn [--as NAME]`.
 
-1. Check the code: pipeline/ must be committed and clean.
+1. Check the code: pipeline/ must be committed and clean, and so must the branch file and its proposal, so the run
+   names the exact proposal (and the prediction in it) that it ran against.
 2. Check the decision: the person is cleared by the roster; the registry agrees with the config; the override
    passes every rule; for any branch but BR-0000, the key results are signed off and the proposal's latest
    decision is the lead author's `accepted` (or `adopted`).
@@ -15,14 +16,14 @@ import hashlib
 import json
 import os
 
-from . import keyresults, logs, overrides, provenance, registry
+from . import contribute, keyresults, logs, overrides, provenance, registry
 from .common import LOCKED_PATHS_FLOOR, Paths, canonical_sha256, load_json, load_yaml, under, with_overrides
 from .guard import Guard
 
-RUNNER_VERSION = "multiverse-runner-v1"
+RUNNER_VERSION = "multiverse-runner-v2"
 ANALYSIS = "ai-jobs-map (pipeline/ai_jobs_map/build.py)"
 PROVENANCE_FIELDS = ("runner_version", "analysis", "status", "exit_code", "branch_id", "proposal_id", "decision_point",
-                     "overrides", "override_file_sha256", "base_config_sha256", "effective_config_sha256", "code_commit",
+                     "overrides", "override_file_sha256", "proposal_file_sha256", "base_config_sha256", "effective_config_sha256", "code_commit",
                      "code_dirty", "environment", "started_at", "finished_at", "ran_by", "inputs", "locked_paths",
                      "outputs_dir", "compared_with")
 
@@ -66,16 +67,43 @@ def check_gates(paths, branch_id, person):
         if not lead or kr_spec.get("signed_off_by") != lead:
             raise Refused("the key results and flip rules (paper/multiverse/key_results.yaml) are not signed off by the "
                           "lead author; only BR-0000 runs until they are")
-        dec = logs.latest_decision(logs.load_events(paths), branch["proposal_id"])
+        events = logs.load_events(paths)
+        probs = logs.check_log(events)
+        if probs:
+            raise Refused("the decision log is ambiguous: " + "; ".join(probs[:5]))
+        dec = logs.latest_decision(events, branch["proposal_id"])
         if dec is None or dec.get("status") not in ("accepted", "adopted"):
             raise Refused(f"{branch['proposal_id']}'s latest decision is {dec.get('status') if dec else 'missing'}, not accepted")
         if dec.get("decided_by") != lead:
             raise Refused(f"{branch['proposal_id']} was not accepted by the lead author")
         if dec.get("decision_point") != branch["decision_point"]:
             raise Refused(f"{branch['proposal_id']} was accepted for {dec.get('decision_point')}, not {branch['decision_point']}")
-        if not os.path.exists(os.path.join(paths.proposals, branch["proposal_id"] + ".md")):
+        prop_path = os.path.join(paths.proposals, branch["proposal_id"] + ".md")
+        if not os.path.exists(prop_path):
             raise Refused(f"no proposal file paper/multiverse/proposals/{branch['proposal_id']}.md")
+        first = logs.first_event(events, branch["proposal_id"], "proposed")
+        with open(prop_path) as fh:
+            text = fh.read()
+        if (first is None or not first.get("sections_sha256")
+                or contribute.sections_sha256(text) != first["sections_sha256"]):
+            raise Refused(f"{branch['proposal_id']}'s Alternative, Rationale or prediction isn't what was proposed (changed "
+                          "since, or never logged with `propose`); a changed proposal is a new proposal")
+        fm = contribute.front(text)[0]
+        if (fm.get("proposer"), fm.get("decision_point")) != (first.get("proposer"), first.get("decision_point")):
+            raise Refused(f"{branch['proposal_id']}.md names {fm.get('proposer')} on {fm.get('decision_point')}, but the log "
+                          f"has {first.get('proposer')} on {first.get('decision_point')}")
+    for f in branch_files(paths, branch):
+        if provenance.git(paths.root, "status", "--porcelain", "--untracked-files=all", "--", paths.rel(f)).strip():
+            raise Refused(f"{paths.rel(f)} isn't committed, or has changes since; commit it first, so the run names "
+                          "the version it ran against")
     return {"code": code, "roster": roster, "branch": branch, "base_cfg": base_cfg, "kr_spec": kr_spec}
+
+
+def branch_files(paths, branch):
+    files = [os.path.join(paths.branches, branch["branch_id"] + ".yaml")]
+    if branch.get("proposal_id"):
+        files.append(os.path.join(paths.proposals, branch["proposal_id"] + ".md"))
+    return files
 
 
 def new_run_dir(paths, branch_id, now):
@@ -111,6 +139,7 @@ def execute(paths, g, analysis, person, now, compared_with=None):
         "runner_version": RUNNER_VERSION, "analysis": ANALYSIS, "status": "ok" if rc == 0 else "failed", "exit_code": rc,
         "branch_id": branch["branch_id"], "proposal_id": branch.get("proposal_id"), "decision_point": branch.get("decision_point"),
         "overrides": branch["overrides"], "override_file_sha256": override_sha,
+        "proposal_file_sha256": provenance.sha256_file(branch_files(paths, branch)[1]) if branch.get("proposal_id") else None,
         "base_config_sha256": canonical_sha256(base_cfg), "effective_config_sha256": canonical_sha256(eff),
         "code_commit": g["code"]["commit"], "code_dirty": g["code"]["dirty"], "environment": provenance.environment(),
         "started_at": logs.iso(started), "finished_at": logs.iso(finished),

@@ -1,8 +1,9 @@
 # Key results: the numbers every branch is compared on, and the rule that says when a branch has "flipped" one.
 #
-# PROVISIONAL. The lead author signs these off before the first branch other than BR-0000 runs: a flip rule
-# written after seeing results doesn't count. Until signed_off_by names the lead author in paper/roster.yaml, the
-# runner runs only BR-0000 (the default).
+# SIGNED OFF by the lead author on 2026-11-23, before any branch other than BR-0000 had run. A flip rule written
+# after seeing a branch's results doesn't count, so these rules change only with a new sign-off, recorded here with
+# its date and reason. The runner runs branches other than BR-0000 only while signed_off_by names the lead author
+# in paper/roster.yaml.
 #
 # Each result is read from the run's ecosystem.json; nothing is added to the build. Values at the default
 # (BR-0000 at commit 8673b2a, 2026-11-23) are given in `default_note` for orientation only; the runner always compares a branch with a
@@ -14,9 +15,14 @@
 #   order-changes   the ranked list differs from the default
 #   top-changes     the top item (or the set of tied top items) differs from the default, in any group
 
-status: provisional
-signed_off_by: null
-signed_off_on: null
+status: signed-off
+signed_off_by: Nik Bear Brown
+signed_off_on: 2026-11-23
+sign_off_notes: >-
+  Given in chat on 2026-11-23 (the lead author approved the Phase 2 report's recommendations) and recorded by
+  Claude Code. Signed off as drafted except KR-06, whose flip rule changed from top-changes to none: three of the
+  four qualifying sector buckets are tied at the default, so one firm would count as a flip. This was decided from
+  the default run (BR-0000) only; no other branch had run.
 
 results:
 - id: KR-01
@@ -53,11 +59,11 @@ results:
 - id: KR-06
   title: Most common signal type in each sector bucket with at least 5 measured firms
   read: {from: top_signal_type_by_bucket, min_measured_firms: 5}
-  flip_rule: top-changes
+  flip_rule: none
   default_note: >-
     Four buckets qualify. financial-services, it-services and software-internet are tied between builds and
     integrates (5, 10 and 8 each); industrials is builds (5 vs 4). Three of four buckets are tied at the default,
-    so this result moves with one firm.
+    so this result moves with one firm, and its flip rule is none: changes are reported, never counted as flips.
 
 - id: KR-07
   title: Share of distinct roles with an occupation code

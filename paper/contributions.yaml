@@ -1,5 +1,6 @@
 # Contribution log. It becomes the paper's contribution statement and acknowledgments (CONTRIBUTING-paper.md
-# section 5). Append an entry as you go; the lead author corrects an entry with a new entry, never by editing.
+# section 5). Append an entry as you go, with `python3 -I pipeline/run.py log-contribution` or the /contribute
+# skill; the lead author corrects an entry with a new entry, never by editing.
 #
 #   entry_id                  C-nnnn
 #   contributor               name, as in paper/roster.yaml
@@ -9,8 +10,10 @@
 #                             Funding acquisition, Investigation, Methodology, Project administration,
 #                             Resources, Software, Supervision, Validation, Visualization,
 #                             Writing - original draft, Writing - review & editing)
-#   counts_as                 component | writing | acknowledgment (the task table in CONTRIBUTING-paper.md).
-#                             Rating is recorded as acknowledgment and never carries a pseudonym
+#   counts_as                 component | writing | acknowledgment (the task table in CONTRIBUTING-paper.md), or
+#                             none for a session that didn't advance a task (kept for the record, left out of the
+#                             contribution statement). Rating is recorded as acknowledgment and never carries a
+#                             pseudonym
 #   artifacts                 where it lives: files, decision-log events, commits
 #   ai_assistance             what an AI tool did, if anything (never used for rating)
 #   confirmed_by_contributor  true once the contributor has read the entry

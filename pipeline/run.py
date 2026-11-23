@@ -6,6 +6,7 @@
     python3 -I pipeline/run.py check-registry               # the decision-point registry agrees with the config
     python3 -I pipeline/run.py branch BR-0001 [--as NAME]   # run one multiverse branch (paper/multiverse/)
     python3 -I pipeline/run.py log-event --proposal P-0001 ...   # append a decision event (proposed, accepted, ...)
+    python3 -I pipeline/run.py status --as NAME             # what the /contribute skill calls: see pipeline/multiverse/contribute.py
     python3 -I pipeline/run.py label    # local labeling page for the review sample (127.0.0.1:8794)
 """
 import os
@@ -32,7 +33,8 @@ elif cmd == "test":
     suite = unittest.TestSuite(unittest.defaultTestLoader.discover(os.path.join(ROOT, "pipeline", d, "tests"), top_level_dir=ROOT)
                                for d in ("ai_jobs_map", "multiverse"))
     sys.exit(0 if unittest.TextTestRunner(verbosity=1).run(suite).wasSuccessful() else 1)
-elif cmd in ("check-registry", "branch", "log-event"):
+elif cmd in ("check-registry", "branch", "log-event", "status", "points", "key-results", "own", "new-proposal", "propose", "new-branch",
+             "new-interpretation", "log-contribution", "log-verification"):
     from pipeline.multiverse import cli
     sys.exit(cli.main(cmd, sys.argv[2:]))
 else:

@@ -8,12 +8,17 @@
 #   proposer       contributor name (paper/roster.yaml)
 #   status         proposed | accepted | rejected | run | adopted
 #   reason         required for rejected; the lead author's words for accepted, rejected and adopted
-#   decided_by     the lead author for accepted, rejected and adopted; "runner" for run; the proposer for proposed
+#   decided_by     the lead author for accepted, rejected and adopted; "runner" for run; the proposer for proposed.
+#                  Proposed events are written only by `pipeline/run.py propose`, decisions by `log-event`, runs by
+#                  the runner
 #   date           UTC, ISO 8601
 #   results_seen   before | after: whether any run of this proposal had finished before this event. Computed
 #                  from the run records by `pipeline/run.py log-event`, whatever was typed. null for run events.
 #   results_link   the run folder, for run events
-#   corrects       the event_id this event corrects, or null
+#   corrects       the event_id this event corrects, or null. Only the lead author's accepted, rejected or adopted
+#                  events correct, and only events about the same proposal; a run is never set aside
+#   sections_sha256  for proposed events: the hash of the proposal's Alternative, Rationale and prediction as
+#                  proposed. The runner refuses a branch whose proposal no longer matches it
 #
 # Cut for reasons, never for results. A rejection after results were seen is flagged in the supplement, and every
 # run goes in the supplement whether or not it was adopted.

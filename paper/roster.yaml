@@ -6,7 +6,8 @@
 #
 #   name              as the person signs their work
 #   role              lead-author | contributor
-#   rater             true if they rate firms for the study
+#   rater             true if they rate firms for the study, or might later. false only for someone who will
+#                     not rate: a person marked false can see results, so their ratings could no longer be blind
 #   ratings_complete  true | false when rater is true; null otherwise. Copied from the rating system's
 #                     completion flag, which is the source of truth once it exists
 #   set_by, set_on    who last changed this entry, and when

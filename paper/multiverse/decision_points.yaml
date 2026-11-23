@@ -12,7 +12,9 @@
 #   id               DP-nn, stable forever. A retired point keeps its id with status: closed.
 #   title            Short name.
 #   description      Plain language: what the choice is and why it matters.
-#   current_value    What the pipeline does today (always a string).
+#   current_value    What the pipeline does today (always a string). The rule only, never its result: counts
+#                    and shares are results, which live in key_results.yaml and the run folders, and raters
+#                    whose ratings aren't complete must not see them.
 #   default_status   settled | provisional. Provisional = an open lead-author decision; the current value is
 #                    the comparison point for branches until it is decided.
 #   kind             config | mixed | hard-coded | dead-key | not-implemented, as found in the Phase 0 audit
@@ -196,7 +198,7 @@
 - id: DP-07
   title: Firm inclusion
   description: Which firms are in the jobs map at all.
-  current_value: every firm in the live collection (730), tiered
+  current_value: every firm in the live collection, tiered
   default_status: settled
   kind: hard-coded
   location: [pipeline/ai_jobs_map/build.py main() step 1 (every firm in the live collection)]
@@ -384,7 +386,7 @@
 - id: DP-16
   title: Postings without recognised headings
   description: What happens to a posting whose headings the pipeline doesn't recognise.
-  current_value: kept and flagged (6,160 roles)
+  current_value: kept and flagged
   default_status: settled
   kind: hard-coded
   location: [pipeline/ai_jobs_map/core.py requirement_blocks(), 'pipeline/ai_jobs_map/build.py main() step 3 (unsectioned
@@ -448,7 +450,7 @@
 - id: DP-19
   title: Stoplist
   description: Common words that can't be skills on their own.
-  current_value: 140 words
+  current_value: 144 words
   default_status: settled
   kind: hard-coded
   location: [pipeline/ai_jobs_map/core.py STOP]
@@ -535,7 +537,7 @@
   title: Minimum skills for an AI score
   description: A role needs at least this many vocabulary skills to get an AI-relatedness score. Roles with fewer
     are counted, not scored.
-  current_value: 3 (143 roles don't get a score)
+  current_value: '3'
   default_status: settled
   kind: config
   location: ['config: skills.min_skills_for_omega']
@@ -577,7 +579,7 @@
 - id: DP-25
   title: AI threshold
   description: How high a role's AI-relatedness score must be for the role to count as AI-related.
-  current_value: omega > 0.1 (95% of scored roles pass)
+  current_value: omega > 0.1
   default_status: provisional
   kind: config
   location: ['config: ai_relatedness.threshold']
@@ -822,7 +824,7 @@
 - id: DP-36
   title: Tier cutoff rule
   description: How many distinct roles a firm needs before its hiring shape is reported as measured (Tier A).
-  current_value: 200 roles (95 firms in Tier A)
+  current_value: 200 roles
   default_status: provisional
   kind: mixed
   location: ['config: tier.plateau_min_roles, within_plateau, max_next_gain, fallback_cutoff', pipeline/ai_jobs_map/core.py
@@ -848,8 +850,7 @@
   title: Tier and AI-section gate
   description: Which firms get measured sections. Tier A needs the role cutoff; an AI section also needs enough
     roles with text.
-  current_value: Tier A = distinct roles >= cutoff; AI section also needs text roles >= text cutoff (200), so 47
-    firms
+  current_value: Tier A = distinct roles >= cutoff; AI section also needs text roles >= text cutoff (200)
   default_status: settled
   kind: hard-coded
   location: [pipeline/ai_jobs_map/core.py assign_tier(), pipeline/ai_jobs_map/build.py main() step 8 (AI section needs
@@ -908,7 +909,7 @@
 - id: DP-40
   title: Low-confidence matches
   description: Name matches that are probably wrong are held for review and left out of counts.
-  current_value: key under 4 characters, in a 15-word generic list, or shared by more than one firm (5 rows held)
+  current_value: key under 4 characters, in a 15-word generic list, or shared by more than one firm
   default_status: settled
   kind: hard-coded
   location: [pipeline/ai_jobs_map/build.py main() step 6 (low-confidence matches)]

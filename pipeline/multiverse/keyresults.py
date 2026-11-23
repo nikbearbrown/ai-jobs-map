@@ -90,6 +90,8 @@ def diff(default, branch, spec):
         d, b = default[r["id"]], branch[r["id"]]
         e = {"title": r["title"], "flip_rule": r["flip_rule"], "default": d["value"], "branch": b["value"],
              "changed": d["value"] != b["value"], "flipped": _flipped(r["flip_rule"], d, b, r)}
+        if r.get("threshold") is not None:
+            e["threshold"] = r["threshold"]
         if isinstance(d["value"], (int, float)) and isinstance(b["value"], (int, float)) and not isinstance(d["value"], bool):
             e["change"] = round(b["value"] - d["value"], 4)
         if isinstance(d["value"], dict):
@@ -100,10 +102,36 @@ def diff(default, branch, spec):
     return out
 
 
+def show(v):
+    """A key-result value in words: 90.0%, builds > integrates = uses_tools, it-services: builds; ..."""
+    if isinstance(v, bool) or v is None:
+        return str(v)
+    if isinstance(v, float):
+        return f"{v:.1%}" if 0 <= v <= 1 else f"{v:,}"
+    if isinstance(v, int):
+        return f"{v:,}"
+    if isinstance(v, dict):
+        return "; ".join(f"{k}: {show(x)}" for k, x in v.items()) or "(none)"
+    if isinstance(v, list) and v and all(isinstance(g, list) for g in v):
+        return " > ".join(" = ".join(map(str, g)) for g in v)
+    if isinstance(v, list):
+        return " = ".join(map(str, v)) or "(none)"
+    return str(v)
+
+
 def table(kr_diff):
-    """Plain-text table for the terminal: key result, default, branch, flipped."""
-    lines = [f"{'Key result':<8} {'Default':<34} {'Branch':<34} Flip", "-" * 84]
+    """Plain text for the terminal and for interpretations: each key result, its default and branch values in full,
+    and whether it changed or flipped. "=" joins ties; ">" separates ranks."""
+    lines = []
     for k, e in kr_diff.items():
-        fmt = lambda v: (f"{v:.1%}" if isinstance(v, float) and v <= 1 else str(v))[:33]
-        lines.append(f"{k:<8} {fmt(e['default']):<34} {fmt(e['branch']):<34} {'FLIP' if e['flipped'] else ('changed' if e['changed'] else '')}")
+        tag = "FLIP" if e["flipped"] else ("changed" if e["changed"] else "same")
+        rule = e["flip_rule"] + (f" {show(e['threshold'])}" if e.get("threshold") is not None else "")
+        lines.append(f"{k}  {e['title']}  [{tag}; flip rule: {rule}]")
+        change = ""
+        if "change" in e and e["change"]:
+            c = e["change"]
+            change = (f"  ({c * 100:+.1f} points)" if isinstance(e["default"], float) and abs(e["default"]) <= 1
+                      else f"  ({c:+,})")
+        lines.append(f"    default  {show(e['default'])}")
+        lines.append(f"    branch   {show(e['branch'])}{change}")
     return "\n".join(lines)

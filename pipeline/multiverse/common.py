@@ -30,6 +30,10 @@ class Paths:
         self.proposals = os.path.join(self.mv, "proposals")
         self.runs = os.path.join(self.mv, "runs")
         self.roster = os.path.join(self.paper, "roster.yaml")
+        self.templates = os.path.join(self.mv, "templates")
+        self.interpretations = os.path.join(self.mv, "interpretations")
+        self.contributions = os.path.join(self.paper, "contributions.yaml")
+        self.verification_log = os.path.join(self.paper, "verification_log.yaml")
         self.config = config or os.path.join(self.root, "pipeline", "ai_jobs_map", "config", "config.json")
 
     def rel(self, path):

@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 import unittest
 
-from pipeline.multiverse import keyresults, logs, overrides, registry
+from pipeline.multiverse import contribute, keyresults, logs, overrides, provenance, registry
 from pipeline.multiverse.common import ROOT, Paths, canonical_sha256, dump_yaml, load_json, load_yaml, with_overrides
 from pipeline.multiverse.guard import Guard, GuardViolation
 from pipeline.multiverse.runner import PROVENANCE_FIELDS, Refused, run_branch
@@ -86,6 +86,26 @@ def stand_in(cfg, out_dir):
     return 0
 
 
+PROPOSAL = """---
+proposal_id: {pid}
+decision_point: {dp}
+proposer: Done Rater
+---
+
+## Alternative
+
+raise the firm minimum to 5
+
+## Rationale (contributor's own words, with precedent if any)
+
+my words
+
+## What we'd expect to see if the finding is fragile
+
+KR-02 falls
+"""
+
+
 class Repo:
     """A temporary git repo laid out like this one, with fixture config, registry and paper files."""
 
@@ -111,8 +131,8 @@ class Repo:
         with open(self.paths.registry, "w") as fh:
             fh.write(dump_yaml(FIX_POINTS))
         spec = load_yaml(REAL.key_results)
-        if signed:
-            spec["signed_off_by"], spec["signed_off_on"] = LEAD, "2026-11-23"
+        spec["status"], spec["signed_off_by"], spec["signed_off_on"] = (("signed-off", LEAD, "2026-11-23") if signed
+                                                                        else ("provisional", None, None))
         with open(self.paths.key_results, "w") as fh:
             fh.write(dump_yaml(spec))
         with open(self.paths.roster, "w") as fh:
@@ -121,23 +141,33 @@ class Repo:
                 {"name": "Done Rater", "role": "contributor", "rater": True, "ratings_complete": True},
                 {"name": "Busy Rater", "role": "contributor", "rater": True, "ratings_complete": False}]))
         shutil.copy(REAL.decision_log, self.paths.decision_log)
-        self.branch("BR-0000", None, None, {})
+        self.branch("BR-0000", None, None, {}, commit=False)
         self.git("init", "-q")
-        self.git("add", "-A")
-        self.git("-c", "user.name=t", "-c", "user.email=t@example.invalid", "commit", "-qm", "fixture")
+        self.commit("-A")
 
     def git(self, *a):
         subprocess.run(["git", "-C", self.dir, *a], check=True, capture_output=True)
 
-    def branch(self, bid, pid, dp, ov):
-        with open(os.path.join(self.paths.branches, bid + ".yaml"), "w") as fh:
+    def commit(self, *paths):
+        self.git("add", *paths)
+        self.git("-c", "user.name=t", "-c", "user.email=t@example.invalid", "commit", "-qm", "fixture")
+
+    def branch(self, bid, pid, dp, ov, commit=True):
+        path = os.path.join(self.paths.branches, bid + ".yaml")
+        with open(path, "w") as fh:
             fh.write(dump_yaml({"branch_id": bid, "proposal_id": pid, "decision_point": dp, "overrides": ov}))
+        if commit:
+            self.commit(path)
 
     def propose(self, pid="P-0001", dp="DP-01", accept=True):
-        with open(os.path.join(self.paths.proposals, pid + ".md"), "w") as fh:
-            fh.write("my words\n")
+        path = os.path.join(self.paths.proposals, pid + ".md")
+        text = PROPOSAL.format(pid=pid, dp=dp)
+        with open(path, "w") as fh:
+            fh.write(text)
+        self.commit(path)
         logs.append_event(self.paths, {"proposal_id": pid, "decision_point": dp, "status": "proposed",
-                                       "proposer": "Done Rater", "alternative": "raise the firm minimum to 5"})
+                                       "proposer": "Done Rater", "alternative": "raise the firm minimum to 5",
+                                       "sections_sha256": contribute.sections_sha256(text)})
         if accept:
             logs.append_event(self.paths, {"proposal_id": pid, "decision_point": dp, "status": "accepted",
                                            "decided_by": LEAD, "reason": "precedent in the literature"})
@@ -364,6 +394,29 @@ class TestLogs(unittest.TestCase):
         first = logs.load_events(self.r.paths)[1]
         self.assertEqual(first["results_seen"], "before")
 
+    def test_only_the_lead_author_corrects_and_runs_are_never_set_aside(self):
+        self.r.propose(accept=False)
+        rej = logs.append_event(self.r.paths, {"proposal_id": "P-0001", "decision_point": "DP-01", "status": "rejected",
+                                               "decided_by": LEAD, "reason": "no precedent"})
+        with self.assertRaisesRegex(logs.LogError, "only the lead author"):      # a proposer can't undo a rejection
+            logs.append_event(self.r.paths, {"proposal_id": "P-0001", "decision_point": "DP-01", "status": "proposed",
+                                             "proposer": "Done Rater", "alternative": "again", "corrects": rej["event_id"]})
+        with self.assertRaisesRegex(logs.LogError, "already proposed"):
+            logs.append_event(self.r.paths, {"proposal_id": "P-0001", "decision_point": "DP-01", "status": "proposed",
+                                             "proposer": "Done Rater", "alternative": "again"})
+        run = logs.append_event(self.r.paths, {"proposal_id": "P-0001", "decision_point": "DP-01", "status": "run",
+                                               "results_link": "paper/multiverse/runs/BR-0001/x"})
+        with self.assertRaisesRegex(logs.LogError, "never set aside"):
+            logs.append_event(self.r.paths, {"proposal_id": "P-0001", "decision_point": "DP-01", "status": "rejected",
+                                             "decided_by": LEAD, "reason": "x", "corrects": run["event_id"]})
+
+    def test_an_ambiguous_log_is_found(self):
+        self.r.propose()
+        evs = logs.load_events(self.r.paths)
+        self.assertEqual(logs.check_log(evs), [])
+        dup = dict(evs[0], event_id="E-0001")
+        self.assertTrue(any("more than once" in p for p in logs.check_log(evs + [dup])))
+
     def test_a_correction_sets_the_corrected_event_aside(self):
         self.r.propose(accept=False)
         logs.append_event(self.r.paths, {"proposal_id": "P-0001", "decision_point": "DP-01", "status": "rejected",
@@ -422,6 +475,38 @@ class TestRunner(unittest.TestCase):
         with self.assertRaisesRegex(Refused, "uncommitted"):
             self.run_()
 
+    def test_the_branch_and_its_proposal_must_be_committed(self):
+        self.r.propose()
+        self.r.branch("BR-0001", "P-0001", "DP-01", {"skills.min_support_firms": 5})
+        prop = os.path.join(self.r.paths.proposals, "P-0001.md")
+        with open(prop, "a") as fh:
+            fh.write("\n## Critique record\n\n- Q (Claude): a question added after acceptance\n")
+        with self.assertRaisesRegex(Refused, "P-0001.md isn't committed"):
+            self.run_("BR-0001")
+        self.r.commit(prop)
+        res = self.run_("BR-0001")
+        self.assertEqual(res["provenance"]["proposal_file_sha256"], provenance.sha256_file(prop))
+        self.r.branch("BR-0002", "P-0001", "DP-01", {"skills.min_support_firms": 6}, commit=False)
+        with self.assertRaisesRegex(Refused, "BR-0002.yaml isn't committed"):
+            self.run_("BR-0002")
+
+    def test_a_proposal_changed_after_it_was_proposed_is_refused(self):
+        self.r.propose()
+        self.r.branch("BR-0001", "P-0001", "DP-01", {"skills.min_support_firms": 5})
+        prop = os.path.join(self.r.paths.proposals, "P-0001.md")
+        with open(prop) as fh:
+            text = fh.read()
+        with open(prop, "w") as fh:
+            fh.write(text.replace("KR-02 falls", "KR-02 rises"))   # the prediction edited after the default was seen
+        self.r.commit(prop)
+        with self.assertRaisesRegex(Refused, "isn't what was proposed"):
+            self.run_("BR-0001")
+        with open(prop, "w") as fh:
+            fh.write(text.replace("proposer: Done Rater", "proposer: Someone Else"))
+        self.r.commit(prop)
+        with self.assertRaisesRegex(Refused, "names Someone Else"):
+            self.run_("BR-0001")
+
     def test_people_the_roster_does_not_clear_are_refused(self):
         for person in ("Busy Rater", "Someone New"):
             with self.assertRaises(Refused):
@@ -457,7 +542,11 @@ class TestRunner(unittest.TestCase):
             self.run_("BR-0001")
 
     def test_a_locked_point_is_refused_even_when_accepted(self):
-        self.r.propose(dp="DP-03")
+        with self.assertRaisesRegex(logs.LogError, "locked"):    # the log refuses it first ...
+            self.r.propose(dp="DP-03")
+        with open(self.r.paths.decision_log, "a") as fh:          # ... and a hand edit still can't run it
+            fh.write("\n" + dump_yaml([{"event_id": "E-0001", "proposal_id": "P-0001", "decision_point": "DP-03",
+                                        "status": "accepted", "decided_by": LEAD, "reason": "x", "date": "2026-11-23T00:00:00Z"}]))
         self.r.branch("BR-0001", "P-0001", "DP-03", {"tier.cutoff": 100})
         with self.assertRaisesRegex(Refused, "locked DP-03"):
             self.run_("BR-0001")
