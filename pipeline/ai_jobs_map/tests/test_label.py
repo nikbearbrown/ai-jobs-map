@@ -8,7 +8,7 @@ import urllib.error
 import urllib.request
 from http.server import ThreadingHTTPServer
 
-from pipeline.ai_job_map import label
+from pipeline.ai_jobs_map import label
 
 PACKET = {"name": "t", "snapshot_date": "2026-11-11", "config_sha256": "x",
           "roles": [{"n": 1, "posting_id": "greenhouse:acme:1", "title": "ML Engineer", "requirement_text": "Train models.", "full_ad": ["About Acme", "Train models."]},

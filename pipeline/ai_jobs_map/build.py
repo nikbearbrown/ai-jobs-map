@@ -1,4 +1,4 @@
-"""Derive the AI job map from raw inputs into data/ai-job-map/v1. Deterministic (sorted inputs, fixed seeds), re-runnable,
+"""Derive the AI jobs map from raw inputs into data/ai-jobs-map/v1. Deterministic (sorted inputs, fixed seeds), re-runnable,
 and it logs counts at every step. No ad text or requirement text is written anywhere: outputs carry counts, skills
 (short phrases), occupation codes and role titles only."""
 import csv
@@ -94,7 +94,7 @@ def check_implemented(cfg):
 
 
 def main(cfg=None, out_dir=None, private_outputs=True):
-    """Build the job map. With no arguments: the config file, into inputs.output_dir, as always. The branch runner
+    """Build the jobs map. With no arguments: the config file, into inputs.output_dir, as always. The branch runner
     passes an effective config and its own run folder, and private_outputs=False (no labeling packet)."""
     STEPS.clear()
     if cfg is None:
@@ -126,7 +126,7 @@ def main(cfg=None, out_dir=None, private_outputs=True):
     def prov(sources, d_from, d_to, roles, method, units=None, notes=None):
         return {"sources": [SRC[s] for s in sources], "date_range": {"from": d_from, "to": d_to}, "distinct_roles_used": roles,
                 "units_used": units, "method_version": method, "config_sha256": cfg_sha, "computed_at": computed_at,
-                "methods_url": "/methodology#ai-job-map", "notes": notes}
+                "methods_url": "/methodology#ai-jobs-map", "notes": notes}
 
     # ------------------------------------------------------------ 1. live collection -> distinct roles
     live, by_id = [], {}

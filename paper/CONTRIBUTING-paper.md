@@ -1,13 +1,13 @@
-# Contributing to the AI Job Map Paper
+# Contributing to the AI Jobs Map Paper
 
 ## Executive summary
 
-* **What this is.** The guide for anyone who wants to contribute to the AI job map paper: how credit works, what every author is expected to do, and every task the paper needs done.
+* **What this is.** The guide for anyone who wants to contribute to the AI jobs map paper: how credit works, what every author is expected to do, and every task the paper needs done.
 * **Who earns authorship.** We follow Yale's four criteria (section 1). Rating firms earns acknowledgment. Authorship also needs a component task, help writing the paper, approval of the final version and accountability for it.
 * **Rules that protect the study** (section 4). No AI tools while rating. Raters see no model outputs or analysis until their ratings are marked complete.
 * **The most open component task** is owning a decision point in the multiverse analysis (section 6). You research one analytic choice, propose alternatives in your own words, the group decides which run, and you interpret what changed.
 
-This paper studies how Boston organizations use and present AI, built on the AI job map at jobs.humanitarians.ai/ecosystem. It needs contributors, not just raters. This guide explains how credit works, what we expect from every author, and every task the paper needs done.
+This paper studies how Boston organizations use and present AI, built on the AI jobs map at jobs.humanitarians.ai/ecosystem. It needs contributors, not just raters. This guide explains how credit works, what we expect from every author, and every task the paper needs done.
 
 ## 1. How credit works
 
@@ -127,7 +127,7 @@ Every analysis is built from choices: what counts as one role, how common a phra
 2. **Research how published work made the same choice.** "No precedent found" is an acceptable answer if you say where you looked.
 3. **Propose alternatives in your own words,** one file per alternative, from the [proposal template](multiverse/templates/proposal.md). Write what you'd expect to see if the finding depends on this choice **before** anything runs. An alternative you expect to eliminate is welcome: say why.
 4. **The group discusses, and the lead author decides.** Every decision goes in the [decision log](multiverse/decision_log.yaml), including every rejection and its reason.
-5. **Accepted alternatives run as branches,** on the job map's descriptive outputs only, never on the study's test set or its preregistered evaluation. Each branch is compared with the default on the [key results](multiverse/key_results.yaml).
+5. **Accepted alternatives run as branches,** on the jobs map's descriptive outputs only, never on the study's test set or its preregistered evaluation. Each branch is compared with the default on the [key results](multiverse/key_results.yaml).
 6. **You write the interpretation:** what changed, whether the finding held against what you predicted, and what it means for the claim.
 
 **Cut for reasons, never for results.** An alternative is rejected only for a reason that doesn't depend on its result. Every branch that runs goes in the supplement, and a branch that flips a finding is reported as a flip whether or not it is adopted.

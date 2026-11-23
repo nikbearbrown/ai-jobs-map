@@ -1,4 +1,4 @@
-"""Pure functions of the AI job map pipeline. Standard library only; no I/O here, so every step is unit-testable.
+"""Pure functions of the AI jobs map pipeline. Standard library only; no I/O here, so every step is unit-testable.
 
 Method references: Babina, Fedyk, He & Hodson (2024), JFE 151:103745 (AI-relatedness w(s), omega(j));
 Acemoglu, Autor, Hazell & Restrepo (2022), JOLE 40(S1) (role-weighted occupation exposure roll-up).

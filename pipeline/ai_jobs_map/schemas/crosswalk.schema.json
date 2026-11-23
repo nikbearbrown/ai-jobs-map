@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://jobs.humanitarians.ai/schemas/ai-job-map/crosswalk-v1.json",
-  "title": "AI job map: employer crosswalk row (v1, implemented)",
+  "$id": "https://jobs.humanitarians.ai/schemas/ai-jobs-map/crosswalk-v1.json",
+  "title": "AI jobs map: employer crosswalk row (v1, implemented)",
   "description": "One row per (firm, source identity). Entity resolution is most of the work: DOL files carry names and addresses, not tax ids; the same employer appears under several names; parents file for offices. Low-confidence rows go to human review and are not used on public pages until reviewed.",
   "type": "object",
   "additionalProperties": false,

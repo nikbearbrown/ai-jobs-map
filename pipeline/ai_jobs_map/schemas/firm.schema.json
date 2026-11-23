@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://jobs.humanitarians.ai/schemas/ai-job-map/firm-v1.json",
-  "title": "AI job map: firm record (v1, implemented)",
+  "$id": "https://jobs.humanitarians.ai/schemas/ai-jobs-map/firm-v1.json",
+  "title": "AI jobs map: firm record (v1, implemented)",
   "description": "One firm = one employer identity in the crosswalk (crosswalk.schema.json). Firms only: research groups never get this record. Every section is either measured (with provenance) or an explicit not_measured block. No ad text anywhere; role titles allowed.",
   "type": "object",
   "additionalProperties": false,

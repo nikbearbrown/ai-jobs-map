@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://jobs.humanitarians.ai/schemas/ai-job-map/ecosystem-v1.json",
-  "title": "AI job map: ecosystem aggregates (v1, implemented)",
+  "$id": "https://jobs.humanitarians.ai/schemas/ai-jobs-map/ecosystem-v1.json",
+  "title": "AI jobs map: ecosystem aggregates (v1, implemented)",
   "description": "Everything the ecosystem view draws. Firm-weighted by default (each firm counts once) so one high-volume board cannot dominate; role-weighted figures carry an explicit weighting field. Research groups are a separate layer and never enter firm aggregates.",
   "type": "object",
   "additionalProperties": false,

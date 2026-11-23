@@ -5,11 +5,11 @@
    passes every rule; for any branch but BR-0000, the key results are signed off and the proposal's latest
    decision is the lead author's `accepted` (or `adopted`).
 3. Build the effective config (base + override) and hash it as canonical JSON.
-4. Run the job map build under the read and write guard, into the branch's own run folder.
+4. Run the jobs map build under the read and write guard, into the branch's own run folder.
 5. Compute the key results and compare them with BR-0000 at the same commit (run BR-0000 first if needed).
 6. Write provenance, and append a `run` event to the decision log.
 
-The job map build is the only analysis this runner can call."""
+The jobs map build is the only analysis this runner can call."""
 import contextlib
 import hashlib
 import json
@@ -20,7 +20,7 @@ from .common import LOCKED_PATHS_FLOOR, Paths, canonical_sha256, load_json, load
 from .guard import Guard
 
 RUNNER_VERSION = "multiverse-runner-v1"
-ANALYSIS = "ai-job-map (pipeline/ai_job_map/build.py)"
+ANALYSIS = "ai-jobs-map (pipeline/ai_jobs_map/build.py)"
 PROVENANCE_FIELDS = ("runner_version", "analysis", "status", "exit_code", "branch_id", "proposal_id", "decision_point",
                      "overrides", "override_file_sha256", "base_config_sha256", "effective_config_sha256", "code_commit",
                      "code_dirty", "environment", "started_at", "finished_at", "ran_by", "inputs", "locked_paths",
@@ -31,8 +31,8 @@ class Refused(Exception):
     """The runner will not run this branch; the message says why."""
 
 
-def job_map_analysis(cfg, out_dir):
-    from pipeline.ai_job_map import build
+def jobs_map_analysis(cfg, out_dir):
+    from pipeline.ai_jobs_map import build
     return build.main(cfg=cfg, out_dir=out_dir, private_outputs=False)
 
 
@@ -149,7 +149,7 @@ def find_default(paths, commit, base_sha):
     return None
 
 
-def run_branch(branch_id, person, paths=None, analysis=job_map_analysis, now=None):
+def run_branch(branch_id, person, paths=None, analysis=jobs_map_analysis, now=None):
     """Run one branch. Returns {"run_dir", "key_results", "diff", "provenance"}; raises Refused."""
     paths = paths or Paths()
     g = check_gates(paths, branch_id, person)

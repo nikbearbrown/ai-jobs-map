@@ -1,6 +1,6 @@
-# Decision-point registry for the AI job map paper.
+# Decision-point registry for the AI jobs map paper.
 #
-# Every analytic choice in pipeline/ai_job_map is listed here, one entry per choice. Contributors own a point,
+# Every analytic choice in pipeline/ai_jobs_map is listed here, one entry per choice. Contributors own a point,
 # research how others made the same choice, and propose alternatives (paper/multiverse/templates/proposal.md).
 # The group decides which alternatives run; accepted ones run as branches (pipeline/multiverse, run with
 # `python3 -I pipeline/run.py branch BR-nnnn`). Cut for reasons, never for results.
@@ -19,7 +19,7 @@
 #                    (before the Phase 2 refactor moved hard-coded choices into the config).
 #   location         Where it lives: config key, or repo-relative file and function.
 #   parameters       The config keys a branch may override for this point. For each:
-#                      key           dotted path into pipeline/ai_job_map/config/config.json
+#                      key           dotted path into pipeline/ai_jobs_map/config/config.json
 #                      form          value (any value of the same type) | list (a list of the same element
 #                                    type) | switch (only the listed variants, which are the ones the code
 #                                    implements; a new variant is a code change, reviewed with its proposal)
@@ -31,7 +31,7 @@
 #                                    config key the code never read)
 #                    Locked and not-built points list their keys too, so an override of them is refused
 #                    with the reason.
-#   rationale        Why the current value was chosen, from the code and the job map reports. "Not recorded"
+#   rationale        Why the current value was chosen, from the code and the jobs map reports. "Not recorded"
 #                    means nobody wrote one down; finding the reason is a contributor task.
 #   precedent        Published work that made this choice. Empty = not yet researched.
 #   affects          Outputs that change when this changes.
@@ -53,7 +53,7 @@
     text
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/core.py role_key(), pipeline/ai_job_map/build.py main() steps 1 and 3 (role keys)]
+  location: [pipeline/ai_jobs_map/core.py role_key(), pipeline/ai_jobs_map/build.py main() steps 1 and 3 (role keys)]
   parameters:
   - key: dedup.role_key_fields
     form: list
@@ -84,7 +84,7 @@
     config) and a trailing -ft or -pt'
   default_status: settled
   kind: mixed
-  location: ['config: dedup.requisition_token', pipeline/ai_job_map/core.py norm_role_title()]
+  location: ['config: dedup.requisition_token', pipeline/ai_jobs_map/core.py norm_role_title()]
   parameters:
   - {key: dedup.requisition_token, form: value, origin: existing}
   - key: dedup.keep_level_words
@@ -109,7 +109,7 @@
   current_value: dropped
   default_status: settled
   kind: dead-key
-  location: ['config: dedup.trailing_employment_suffix (never read)', pipeline/ai_job_map/core.py norm_role_title()]
+  location: ['config: dedup.trailing_employment_suffix (never read)', pipeline/ai_jobs_map/core.py norm_role_title()]
   parameters:
   - {key: dedup.trailing_employment_suffix, form: value, origin: wired-in-phase-2}
   rationale: Not recorded.
@@ -130,7 +130,7 @@
   current_value: contains 'remote' -> remote:us or remote:<rest>
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/core.py norm_location_set()]
+  location: [pipeline/ai_jobs_map/core.py norm_location_set()]
   parameters:
   - {key: dedup.remote_pattern, form: value, origin: new-in-phase-2}
   - key: dedup.collapse_remote
@@ -155,14 +155,14 @@
   current_value: firm-weighted
   default_status: settled
   kind: dead-key
-  location: ['config: aggregation.default_weighting (never read)', pipeline/ai_job_map/build.py main() step 9 (ecosystem
+  location: ['config: aggregation.default_weighting (never read)', pipeline/ai_jobs_map/build.py main() step 9 (ecosystem
       aggregates)]
   parameters:
   - key: aggregation.default_weighting
     form: switch
     variants: [firm]
     origin: wired-in-phase-2
-  rationale: Decision C in the job map Phase 1 approval. One firm (Domino's) holds 43% of collected records.
+  rationale: Decision C in the jobs map Phase 1 approval. One firm (Domino's) holds 43% of collected records.
   precedent: []
   affects: [signal-by-bucket matrix, Boston baseline, bucket baselines]
   analyses: [ecosystem]
@@ -179,7 +179,7 @@
   current_value: 1 firm left out (the one with the most distinct roles)
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/build.py main() step 9 (signal-type matrix)]
+  location: [pipeline/ai_jobs_map/build.py main() step 9 (signal-type matrix)]
   parameters:
   - {key: aggregation.exclude_largest_n, form: value, minimum: 0, origin: new-in-phase-2}
   rationale: Decision C. A neutral rule for one dominant hirer, rather than a named exclusion.
@@ -195,13 +195,13 @@
 
 - id: DP-07
   title: Firm inclusion
-  description: Which firms are in the job map at all.
+  description: Which firms are in the jobs map at all.
   current_value: every firm in the live collection (730), tiered
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/build.py main() step 1 (every firm in the live collection)]
+  location: [pipeline/ai_jobs_map/build.py main() step 1 (every firm in the live collection)]
   parameters: []
-  rationale: Decision A in the job map Phase 1 approval.
+  rationale: Decision A in the jobs map Phase 1 approval.
   precedent: []
   affects: [everything]
   analyses: [ecosystem, firm-profiles, crosswalk]
@@ -239,7 +239,7 @@
   current_value: state is live, has text blocks, joins the live collection
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/build.py main() step 3 (text snapshot join)]
+  location: [pipeline/ai_jobs_map/build.py main() step 3 (text snapshot join)]
   parameters: []
   rationale: Not recorded.
   precedent: []
@@ -278,7 +278,7 @@
   current_value: Tier A firms with at least one role in a listed town
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/build.py main() step 9 (Boston baseline)]
+  location: [pipeline/ai_jobs_map/build.py main() step 9 (Boston baseline)]
   parameters:
   - {key: baselines.boston_min_roles_in_area, form: value, minimum: 1, origin: new-in-phase-2}
   - key: baselines.boston_tiers
@@ -304,7 +304,7 @@
     straightened before patterns are matched
   default_status: settled
   kind: mixed
-  location: ['config: requirements_text.heading_max_chars', pipeline/ai_job_map/core.py requirement_blocks() (heading
+  location: ['config: requirements_text.heading_max_chars', pipeline/ai_jobs_map/core.py requirement_blocks() (heading
       test)]
   parameters:
   - {key: requirements_text.heading_max_chars, form: value, origin: existing}
@@ -348,7 +348,7 @@
   current_value: as described
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/core.py requirement_blocks() (keep and drop rule)]
+  location: [pipeline/ai_jobs_map/core.py requirement_blocks() (keep and drop rule)]
   parameters: []
   rationale: Not recorded.
   precedent: []
@@ -387,7 +387,7 @@
   current_value: kept and flagged (6,160 roles)
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/core.py requirement_blocks(), 'pipeline/ai_job_map/build.py main() step 3 (unsectioned
+  location: [pipeline/ai_jobs_map/core.py requirement_blocks(), 'pipeline/ai_jobs_map/build.py main() step 3 (unsectioned
       roles kept, flagged)']
   parameters: []
   rationale: Dropping them would silently remove firms whose ads use unusual headings.
@@ -434,7 +434,7 @@
   - {key: skills.min_support_roles, form: value, minimum: 1, origin: existing}
   - {key: skills.min_support_firms, form: value, minimum: 1, origin: existing}
   - {key: skills.max_doc_share, form: value, minimum: 0, origin: existing}
-  rationale: Open decision 3 in the job map Phase 2 report, which recommends raising the firm minimum to 5 or 10.
+  rationale: Open decision 3 in the jobs map Phase 2 report, which recommends raising the firm minimum to 5 or 10.
   precedent: []
   affects: [vocabulary, w(s), omega]
   analyses: [ecosystem, firm-profiles]
@@ -451,7 +451,7 @@
   current_value: 140 words
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/core.py STOP]
+  location: [pipeline/ai_jobs_map/core.py STOP]
   parameters:
   - {key: skills.stoplist, form: list, origin: new-in-phase-2}
   rationale: Not recorded. Phase 2 found "deep" on the list had removed "deep learning".
@@ -471,7 +471,7 @@
   current_value: two regular expressions
   default_status: settled
   kind: hard-coded
-  location: ['pipeline/ai_job_map/core.py TOKEN, SEGMENT']
+  location: ['pipeline/ai_jobs_map/core.py TOKEN, SEGMENT']
   parameters:
   - {key: skills.token_pattern, form: value, origin: new-in-phase-2}
   - {key: skills.segment_pattern, form: value, origin: new-in-phase-2}
@@ -514,13 +514,13 @@
   current_value: 'masked: a phrase containing part of a seed is never a candidate skill'
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/core.py ngrams_of_text()]
+  location: [pipeline/ai_jobs_map/core.py ngrams_of_text()]
   parameters:
   - key: skills.mask_seed_fragments
     form: switch
     variants: ['on', 'off']
     origin: new-in-phase-2
-  rationale: Without masking, the top skills by w(s) were fragments of the seeds (job map Phase 2 report).
+  rationale: Without masking, the top skills by w(s) were fragments of the seeds (jobs map Phase 2 report).
   precedent: []
   affects: [w(s)]
   analyses: [ecosystem, firm-profiles]
@@ -583,7 +583,7 @@
   location: ['config: ai_relatedness.threshold']
   parameters:
   - {key: ai_relatedness.threshold, form: value, origin: existing}
-  rationale: Open decision 1 in the job map Phase 2 report. 0.1 was set for Burning Glass skills; here it is a starting
+  rationale: Open decision 1 in the jobs map Phase 2 report. 0.1 was set for Burning Glass skills; here it is a starting
     value.
   precedent: ['Babina, Fedyk, He & Hodson (2024), Journal of Financial Economics 151:103745']
   affects: [AI-related flag, builds, uses-tools, firm AI share, AI histograms]
@@ -602,13 +602,13 @@
   current_value: mean of w(s)
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/core.py omega()]
+  location: [pipeline/ai_jobs_map/core.py omega()]
   parameters:
   - key: ai_relatedness.omega_aggregate
     form: switch
     variants: [mean]
     origin: new-in-phase-2
-  rationale: The mean follows the job map's method after Babina et al. (2024).
+  rationale: The mean follows the jobs map's method after Babina et al. (2024).
   precedent: ['Babina, Fedyk, He & Hodson (2024), Journal of Financial Economics 151:103745']
   affects: [omega]
   analyses: [ecosystem, firm-profiles]
@@ -630,7 +630,7 @@
   - {key: signal_types.builds, form: list, origin: existing}
   - {key: signal_types.integrates, form: list, origin: existing}
   - {key: signal_types.uses_tools, form: list, origin: existing}
-  rationale: Not recorded beyond the job map Phase 1 spec's examples.
+  rationale: Not recorded beyond the jobs map Phase 1 spec's examples.
   precedent: []
   affects: [signal types, signal-by-bucket matrix]
   analyses: [ecosystem, firm-profiles]
@@ -649,7 +649,7 @@
     = only for roles not otherwise AI
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/core.py signal_types()]
+  location: [pipeline/ai_jobs_map/core.py signal_types()]
   parameters:
   - key: signal_types.integrates_requires_ai_related
     form: switch
@@ -659,7 +659,7 @@
     form: switch
     variants: [builds>integrates>uses_tools]
     origin: new-in-phase-2
-  rationale: The job map Phase 1 spec table. Why integrates doesn't require AI-related is not recorded.
+  rationale: The jobs map Phase 1 spec table. Why integrates doesn't require AI-related is not recorded.
   precedent: []
   affects: [signal types]
   analyses: [ecosystem, firm-profiles]
@@ -677,7 +677,7 @@
   current_value: builds > integrates > ai-other > uses-tools > not-ai
   default_status: settled
   kind: hard-coded
-  location: ['pipeline/ai_job_map/build.py main() step 4, ai_label()']
+  location: ['pipeline/ai_jobs_map/build.py main() step 4, ai_label()']
   parameters: []
   rationale: Not recorded.
   precedent: []
@@ -696,7 +696,7 @@
   current_value: status unique, rolled-up or decided
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/soc.py TitleMap]
+  location: [pipeline/ai_jobs_map/soc.py TitleMap]
   parameters:
   - {key: soc.accepted_statuses, form: list, origin: new-in-phase-2}
   rationale: Not recorded.
@@ -716,7 +716,7 @@
   current_value: strips level words at the edges, mode words, everything after a dash, comma or "at"
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/soc.py make_norm_title()]
+  location: [pipeline/ai_jobs_map/soc.py make_norm_title()]
   parameters:
   - {key: soc.level_edge_words, form: list, origin: new-in-phase-2}
   - {key: soc.mode_words, form: list, origin: new-in-phase-2}
@@ -740,7 +740,7 @@
   current_value: longest tail of at least 2 words
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/soc.py TitleMap.assign_with_method()]
+  location: [pipeline/ai_jobs_map/soc.py TitleMap.assign_with_method()]
   parameters:
   - {key: soc.min_tail_words, form: value, minimum: 1, origin: new-in-phase-2}
   rationale: Not recorded.
@@ -761,7 +761,7 @@
   current_value: at least 5 filings, at least 3 employers, at least 70% agree
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/soc.py lca_title_dictionary(), pipeline/ai_job_map/build.py main() step 2]
+  location: [pipeline/ai_jobs_map/soc.py lca_title_dictionary(), pipeline/ai_jobs_map/build.py main() step 2]
   parameters:
   - {key: soc.lca_dictionary.min_filings, form: value, minimum: 1, origin: new-in-phase-2}
   - {key: soc.lca_dictionary.min_employers, form: value, minimum: 1, origin: new-in-phase-2}
@@ -784,7 +784,7 @@
   current_value: SOC major group (hiring tier); AI label (text tier)
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/build.py main() step 5 (stability curves)]
+  location: [pipeline/ai_jobs_map/build.py main() step 5 (stability curves)]
   parameters: []
   rationale: Not recorded.
   precedent: []
@@ -825,14 +825,14 @@
   current_value: 200 roles (95 firms in Tier A)
   default_status: provisional
   kind: mixed
-  location: ['config: tier.plateau_min_roles, within_plateau, max_next_gain, fallback_cutoff', pipeline/ai_job_map/core.py
+  location: ['config: tier.plateau_min_roles, within_plateau, max_next_gain, fallback_cutoff', pipeline/ai_jobs_map/core.py
       choose_cutoff()]
   parameters:
   - {key: tier.plateau_min_roles, form: value, origin: existing}
   - {key: tier.within_plateau, form: value, origin: existing}
   - {key: tier.max_next_gain, form: value, origin: existing}
   - {key: tier.fallback_cutoff, form: value, origin: existing}
-  rationale: Open decision 2 in the job map Phase 2 report. The split-half curve keeps rising with size, so the
+  rationale: Open decision 2 in the jobs map Phase 2 report. The split-half curve keeps rising with size, so the
     plateau rule is weak; the report recommends an absolute target of 0.70 (40 roles, 334 firms).
   precedent: []
   affects: [Tier A, every measured section]
@@ -852,7 +852,7 @@
     firms
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/core.py assign_tier(), pipeline/ai_job_map/build.py main() step 8 (AI section needs
+  location: [pipeline/ai_jobs_map/core.py assign_tier(), pipeline/ai_jobs_map/build.py main() step 8 (AI section needs
       the text cutoff)]
   parameters: []
   rationale: Not recorded.
@@ -873,7 +873,7 @@
   current_value: 21 legal-suffix words removed
   default_status: settled
   kind: hard-coded
-  location: ['pipeline/ai_job_map/core.py norm_employer(), SUFFIX']
+  location: ['pipeline/ai_jobs_map/core.py norm_employer(), SUFFIX']
   parameters: []
   rationale: Not recorded.
   precedent: []
@@ -892,7 +892,7 @@
   current_value: EMPLOYER_NAME or TRADE_NAME_DBA, against live-collection names and the company list
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/lca.py (employer and trade-name match)]
+  location: [pipeline/ai_jobs_map/lca.py (employer and trade-name match)]
   parameters: []
   rationale: Not recorded.
   precedent: []
@@ -911,7 +911,7 @@
   current_value: key under 4 characters, in a 15-word generic list, or shared by more than one firm (5 rows held)
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/build.py main() step 6 (low-confidence matches)]
+  location: [pipeline/ai_jobs_map/build.py main() step 6 (low-confidence matches)]
   parameters: []
   rationale: Not recorded.
   precedent: []
@@ -930,9 +930,9 @@
   current_value: not used
   default_status: provisional
   kind: not-implemented
-  location: [pipeline/ai_job_map/lca.py (never stored)]
+  location: [pipeline/ai_jobs_map/lca.py (never stored)]
   parameters: []
-  rationale: Open decision 4 in the job map Phase 2 report.
+  rationale: Open decision 4 in the jobs map Phase 2 report.
   precedent: []
   affects: [could merge name variants]
   analyses: [ecosystem, firm-profiles]
@@ -952,7 +952,7 @@
   location: ['config: visa_display.case_statuses_counted']
   parameters:
   - {key: visa_display.case_statuses_counted, form: list, origin: existing}
-  rationale: Withdrawn and Denied are shown separately, not counted (job map Phase 1 spec).
+  rationale: Withdrawn and Denied are shown separately, not counted (jobs map Phase 1 spec).
   precedent: []
   affects: [visa counts]
   analyses: [ecosystem, firm-profiles]
@@ -969,14 +969,14 @@
   current_value: positions
   default_status: settled
   kind: dead-key
-  location: ['config: visa_display.count_positions_not_cases (never read)', 'pipeline/ai_job_map/build.py main()
+  location: ['config: visa_display.count_positions_not_cases (never read)', 'pipeline/ai_jobs_map/build.py main()
       step 8, units()']
   parameters:
   - key: visa_display.count_positions_not_cases
     form: switch
     variants: [true, false]
     origin: wired-in-phase-2
-  rationale: Job map Phase 1 spec.
+  rationale: Jobs map Phase 1 spec.
   precedent: []
   affects: [visa counts]
   analyses: [ecosystem, firm-profiles]
@@ -993,7 +993,7 @@
   current_value: 1 position
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/build.py to_int(), 'pipeline/ai_job_map/build.py main() step 8, units()']
+  location: [pipeline/ai_jobs_map/build.py to_int(), 'pipeline/ai_jobs_map/build.py main() step 8, units()']
   parameters:
   - {key: visa_display.missing_positions_default, form: value, minimum: 0, origin: new-in-phase-2}
   rationale: Not recorded.
@@ -1013,7 +1013,7 @@
   current_value: not computed (lca_positions_24m is always null)
   default_status: settled
   kind: not-implemented
-  location: ['config: visa_display.recency_window_months (never read)', pipeline/ai_job_map/build.py main() step
+  location: ['config: visa_display.recency_window_months (never read)', pipeline/ai_jobs_map/build.py main() step
       8 (lca_positions_24m is always null)]
   parameters:
   - {key: visa_display.recency_window_months, form: value, origin: existing}
@@ -1055,7 +1055,7 @@
     says 24 months)
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/build.py main() step 8 (ai_soc_positions)]
+  location: [pipeline/ai_jobs_map/build.py main() step 8 (ai_soc_positions)]
   parameters:
   - key: visa_display.ai_soc_join_window
     form: switch
@@ -1078,9 +1078,9 @@
   current_value: modal NAICS over counted filings, weighted by positions
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/build.py main() step 8 (modal NAICS)]
+  location: [pipeline/ai_jobs_map/build.py main() step 8 (modal NAICS)]
   parameters: []
-  rationale: Job map Phase 1 spec (NAICS from filings as the sector backbone).
+  rationale: Jobs map Phase 1 spec (NAICS from filings as the sector backbone).
   precedent: []
   affects: [bucket]
   analyses: [ecosystem, firm-profiles]
@@ -1098,7 +1098,7 @@
     wins
   default_status: settled
   kind: config
-  location: [pipeline/ai_job_map/config/naics-buckets.csv, pipeline/ai_job_map/core.py naics_bucket()]
+  location: [pipeline/ai_jobs_map/config/naics-buckets.csv, pipeline/ai_jobs_map/core.py naics_bucket()]
   parameters:
   - {key: sector.buckets_csv, form: value, origin: existing}
   rationale: Bear's 16-bucket taxonomy (life sciences split out, GICS used only as a check).
@@ -1120,7 +1120,7 @@
     roles; kept as IT Services if 30% client-site, 20 cities, or H-1B dependent
   default_status: settled
   kind: mixed
-  location: ['config: sector.it_services_to_software', 'config: sector.it_services_keep', pipeline/ai_job_map/build.py
+  location: ['config: sector.it_services_to_software', 'config: sector.it_services_keep', pipeline/ai_jobs_map/build.py
       main() step 8 (IT-services reassignment)]
   parameters:
   - {key: sector.it_services_to_software, form: value, origin: existing}
@@ -1143,7 +1143,7 @@
   current_value: at least 30% share; order life sciences > semiconductors > engineering
   default_status: settled
   kind: mixed
-  location: ['config: sector.rnd_codes', 'config: sector.rnd_route', pipeline/ai_job_map/build.py main() step 8
+  location: ['config: sector.rnd_codes', 'config: sector.rnd_route', pipeline/ai_jobs_map/build.py main() step 8
       (R&D routing)]
   parameters:
   - {key: sector.rnd_codes, form: list, origin: existing}
@@ -1209,7 +1209,7 @@
     text roles
   default_status: settled
   kind: mixed
-  location: ['config: application_tags.min_roles', 'config: application_tags.min_share_of_text_roles', pipeline/ai_job_map/build.py
+  location: ['config: application_tags.min_roles', 'config: application_tags.min_share_of_text_roles', pipeline/ai_jobs_map/build.py
       main() step 8 (application tags)]
   parameters:
   - {key: application_tags.min_roles, form: value, origin: existing}
@@ -1232,7 +1232,7 @@
   current_value: proposed only (young company = 7 years or less); every firm is "not-classified"
   default_status: settled
   kind: not-implemented
-  location: ['docs/ai-job-map/phase-1/ai-job-map.config.proposed.json:140-148', pipeline/ai_job_map/build.py main()
+  location: ['notes/ai-jobs-map/phase-1/ai-jobs-map.config.proposed.json:140-148', pipeline/ai_jobs_map/build.py main()
       step 8 (org_label is always not-classified)]
   parameters: []
   rationale: Fact sources (Form D, EDGAR, IRS) are approved but not downloaded.
@@ -1253,7 +1253,7 @@
   current_value: left out of durations
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/build.py main() step 8 (posting dynamics)]
+  location: [pipeline/ai_jobs_map/build.py main() step 8 (posting dynamics)]
   parameters:
   - key: dynamics.exclude_first_day
     form: switch
@@ -1277,14 +1277,14 @@
     day
   default_status: settled
   kind: hard-coded
-  location: [pipeline/ai_job_map/core.py relisted_roles()]
+  location: [pipeline/ai_jobs_map/core.py relisted_roles()]
   parameters:
   - key: dynamics.relist_match_fields
     form: list
     allowed: [firm, title, locations, hash]
     origin: new-in-phase-2
   - {key: dynamics.relist_min_gap_days, form: value, minimum: 0, origin: new-in-phase-2}
-  rationale: Job map Phase 1 spec. Possible only on boards that carry an ad hash.
+  rationale: Jobs map Phase 1 spec. Possible only on boards that carry an ad hash.
   precedent: []
   affects: [relisted roles]
   analyses: [ecosystem, firm-profiles]

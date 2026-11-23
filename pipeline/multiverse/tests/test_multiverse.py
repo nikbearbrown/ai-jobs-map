@@ -92,7 +92,7 @@ class Repo:
     def __init__(self, signed=True, roster=None):
         self.dir = tempfile.mkdtemp(prefix="mv-test-")
         self.paths = Paths(self.dir)
-        os.makedirs(os.path.join(self.dir, "pipeline", "ai_job_map", "config"))
+        os.makedirs(os.path.join(self.dir, "pipeline", "ai_jobs_map", "config"))
         os.makedirs(self.paths.branches)
         os.makedirs(self.paths.proposals)
         os.makedirs(os.path.join(self.dir, "secret"))
@@ -249,7 +249,7 @@ class TestOverrides(unittest.TestCase):
 
     def test_branch_ids_cannot_point_outside_the_branches_folder(self):
         with self.assertRaises(ValueError):
-            overrides.load_branch(REAL, "../../data/ai-job-map")
+            overrides.load_branch(REAL, "../../data/ai-jobs-map")
 
 
 # ---------------------------------------------------------------- guard
@@ -542,12 +542,12 @@ class TestReach(unittest.TestCase):
                 for n in names:
                     self.assertNotIn("classif", n.lower(), f"{fn} imports {n}")
 
-    def test_the_only_analysis_is_the_job_map_build(self):
+    def test_the_only_analysis_is_the_jobs_map_build(self):
         import inspect
         from pipeline.multiverse import runner
-        src = inspect.getsource(runner.job_map_analysis)
-        self.assertIn("from pipeline.ai_job_map import build", src)
-        self.assertEqual([n for n in dir(runner) if n.endswith("_analysis")], ["job_map_analysis"])
+        src = inspect.getsource(runner.jobs_map_analysis)
+        self.assertIn("from pipeline.ai_jobs_map import build", src)
+        self.assertEqual([n for n in dir(runner) if n.endswith("_analysis")], ["jobs_map_analysis"])
 
 
 if __name__ == "__main__":

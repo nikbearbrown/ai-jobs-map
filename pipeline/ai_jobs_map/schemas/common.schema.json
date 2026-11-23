@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://jobs.humanitarians.ai/schemas/ai-job-map/common-v1.json",
-  "title": "AI job map: shared definitions (v1, implemented)",
+  "$id": "https://jobs.humanitarians.ai/schemas/ai-jobs-map/common-v1.json",
+  "title": "AI jobs map: shared definitions (v1, implemented)",
   "description": "Provenance and the measured / not-measured wrapper used by every derived value. Rule: a figure without provenance does not validate; a construct with no data is an explicit not_measured block with a reason, never a zero or a blank.",
   "$defs": {
     "date": {
@@ -129,7 +129,7 @@
         },
         "methods_url": {
           "type": "string",
-          "default": "/methodology#ai-job-map"
+          "default": "/methodology#ai-jobs-map"
         },
         "notes": {
           "type": [

@@ -4,7 +4,7 @@ import json
 import os
 import unittest
 
-from pipeline.ai_job_map import build, core, soc
+from pipeline.ai_jobs_map import build, core, soc
 
 CONFIG = os.path.join(os.path.dirname(__file__), "..", "config", "config.json")
 REGISTRY = os.path.join(os.path.dirname(__file__), "..", "..", "..", "paper", "multiverse", "decision_points.yaml")

@@ -1,8 +1,8 @@
 import random
 import unittest
 
-from pipeline.ai_job_map import core
-from pipeline.ai_job_map.validate import validate
+from pipeline.ai_jobs_map import core
+from pipeline.ai_jobs_map.validate import validate
 import os
 
 SCHEMAS = os.path.join(os.path.dirname(__file__), "..", "schemas")
@@ -161,7 +161,7 @@ class TestSchemas(unittest.TestCase):
     def test_not_measured_needs_a_reason(self):
         s = os.path.join(SCHEMAS, "common.schema.json")
         ok = {"status": "not_measured", "reason_code": "no-source", "reason": "No data."}
-        from pipeline.ai_job_map.validate import _errs, _load
+        from pipeline.ai_jobs_map.validate import _errs, _load
         node = _load(s)["$defs"]["not_measured"]
         self.assertEqual(_errs(ok, node, os.path.abspath(s), "$"), [])
         self.assertTrue(_errs({"status": "not_measured"}, node, os.path.abspath(s), "$"))

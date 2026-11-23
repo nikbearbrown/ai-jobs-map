@@ -1,6 +1,6 @@
 """A small JSON Schema (2020-12 subset) validator, standard library only: $ref (to other files and #/$defs), allOf,
 anyOf, oneOf, const, enum, type, required, properties, additionalProperties, items, minItems, maxItems, pattern,
-minimum, maximum. Enough for the AI job map's own schemas; not a general implementation."""
+minimum, maximum. Enough for the AI jobs map's own schemas; not a general implementation."""
 import json
 import os
 import re

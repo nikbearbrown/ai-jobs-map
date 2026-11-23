@@ -1,6 +1,6 @@
 """Paths, YAML loading, canonical JSON and dotted config keys for the multiverse tools.
 
-PyYAML is used here and only here (decision 3, Phase 1): the job map build itself stays standard library only."""
+PyYAML is used here and only here (decision 3, Phase 1): the jobs map build itself stays standard library only."""
 import copy
 import hashlib
 import json
@@ -30,7 +30,7 @@ class Paths:
         self.proposals = os.path.join(self.mv, "proposals")
         self.runs = os.path.join(self.mv, "runs")
         self.roster = os.path.join(self.paper, "roster.yaml")
-        self.config = config or os.path.join(self.root, "pipeline", "ai_job_map", "config", "config.json")
+        self.config = config or os.path.join(self.root, "pipeline", "ai_jobs_map", "config", "config.json")
 
     def rel(self, path):
         return os.path.relpath(path, self.root)

@@ -3,7 +3,7 @@
     python3 -I pipeline/run.py label [port]      # serves http://127.0.0.1:8794 (this Mac only)
 
 Reads the private packet the build writes (titles and ad text, outside the repo) and saves each label to
-data/ai-job-map/labels/<packet>.labels.csv as soon as it is clicked, keyed by posting id (so a rebuilt packet
+data/ai-jobs-map/labels/<packet>.labels.csv as soon as it is clicked, keyed by posting id (so a rebuilt packet
 never moves a label onto a different role). The page never receives the measure's
 scores, flags or firm ids, so the labeler stays blind to omega. Standard library only.
 """

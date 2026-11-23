@@ -3,7 +3,7 @@ matches a collected firm by normalised name. Writes a gzipped JSONL cache outsid
 
 Never stores or prints EMPLOYER_FEIN values: only whether the column is filled is logged.
 
-    python3 -I -m pipeline.ai_job_map.lca            # from the repo root
+    python3 -I -m pipeline.ai_jobs_map.lca            # from the repo root
 """
 import csv
 import glob

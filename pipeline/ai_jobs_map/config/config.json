@@ -1,5 +1,5 @@
 {
-  "config_version": "ai-job-map-config-v1",
+  "config_version": "ai-jobs-map-config-v1",
   "data_version": "2026-11-11.1",
   "method_versions": {
     "dedup": "dedup-v1", "requirements_text": "reqtext-v1", "skills": "skills-ngram-v1",
@@ -19,9 +19,9 @@
     "lca_matched_cache": "/Users/bear/Documents/CoWork/job-snapshots/lca-matched-v1.jsonl.gz",
     "lca_observed": ["2023-10-01", "2026-06-30"],
     "lca_quarters_missing": ["FY2026 Q1", "FY2026 Q2"],
-    "output_dir": "data/ai-job-map/v1",
+    "output_dir": "data/ai-jobs-map/v1",
     "private_review_dir": "/Users/bear/Documents/CoWork/job-snapshots/review-private",
-    "labels_dir": "data/ai-job-map/labels"
+    "labels_dir": "data/ai-jobs-map/labels"
   },
 
   "dedup": {
@@ -102,7 +102,7 @@
   },
 
   "sector": {
-    "buckets_csv": "pipeline/ai_job_map/config/naics-buckets.csv",
+    "buckets_csv": "pipeline/ai_jobs_map/config/naics-buckets.csv",
     "it_services_to_software": { "max_secondary_entity_share": 0.1, "max_worksite_cities": 5, "min_software_dev_share": 0.4, "software_dev_socs": ["15-1252", "15-1253", "15-1254", "15-1255", "15-1256", "15-1257", "15-2051"] },
     "it_services_keep": { "min_secondary_entity_share": 0.3, "h1b_dependent": true, "min_worksite_cities": 20 },
     "rnd_codes": ["541713", "541715", "541712"],
