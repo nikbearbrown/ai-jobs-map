@@ -2,11 +2,37 @@
 
 The data and the paper behind the AI jobs map: which organizations hire for AI, what kind of AI work their roles involve, and what their visa filings show. The map itself is shown at [jobs.humanitarians.ai/ecosystem](https://jobs.humanitarians.ai/ecosystem). This repo builds the data behind it and holds the paper that studies it.
 
-## The paper
+## Abstract
 
-- **What it is:** a study of how Boston organizations use and present AI, using the map's data.
-- **Where it stands:** there is no draft and no preregistration yet. The contributor rules, a registry of 57 analysis decision points and the runner that tests alternatives to them are in place.
-- **Contributors start here:** read [paper/CONTRIBUTING-paper.md](paper/CONTRIBUTING-paper.md). It explains how credit works, what every author is expected to do, and every task the paper needs done. In Claude Code, typing `/contribute` walks you through it.
+*Working abstract. No manuscript exists yet, so this describes what the paper sets out to do. It reports no results.*
+
+This paper studies how Boston-area organizations use and present AI, using the data behind the AI jobs map: job postings, H-1B wage filings and O*NET titles. Human raters classify firms from evidence packets under a written codebook. We then test how well language models and a simple co-occurrence baseline reproduce those human classifications, and we examine agreement among raters, calibration, and errors that rest on boilerplate text. Because many analytic choices could change the picture, the paper runs a multiverse analysis over 57 registered decision points. Each one is owned by a contributor who proposes alternatives and interprets what changed. The analysis plan is to be preregistered before results are seen.
+
+## Where the draft is
+
+There is no draft yet. The closest documents are the contributor guide, [paper/CONTRIBUTING-paper.md](paper/CONTRIBUTING-paper.md), which describes the study's tasks, and the decision-point registry, [paper/multiverse/decision_points.yaml](paper/multiverse/decision_points.yaml).
+
+## What needs to be done
+
+- Draft the codebook and review the sector taxonomy.
+- Rate the pilot set of firms, then the main round.
+- Draft the preregistration before any results are seen.
+- Take ownership of the 57 decision points, one contributor each.
+- Build the baseline, run the model evaluation and the agreement analysis.
+- Write the sections of the paper.
+
+Every task is listed in section 3 of the contributor guide.
+
+## How to contribute
+
+Read the [contributor guide](paper/CONTRIBUTING-paper.md). It lists each kind of contribution with where to start and what to send, the rules for this repo, how to submit, and how credit and authorship work.
+
+- **A quick contribution:** open an issue about one claim, source or decision. You don't need to review the whole paper.
+- **To become an author:** take on a component of the work, help write the paper, approve the final version and agree to be accountable for it. The guide explains each step.
+
+In Claude Code, typing `/contribute` in this repo walks you through the guide.
+
+**Raters:** do not use AI tools while rating, and finish your ratings before looking at any model output or analysis.
 
 ## What is in this repo
 
