@@ -9,6 +9,29 @@
 
 This paper studies how Boston organizations use and present AI, built on the AI jobs map at jobs.humanitarians.ai/ecosystem. It needs contributors, not just raters. This guide explains how credit works, what we expect from every author, and every task the paper needs done.
 
+## Getting started
+
+Follow these steps in order. Steps 1 to 3 get you access. Steps 4 to 9 take one contribution from start to finish.
+
+1. **Read first.** Read the [README](../README.md), then the rest of this guide. There is no draft of the paper yet. Allow about an hour. You don't need to follow every detail, but you should know what the paper claims and what it does not.
+2. **Choose one thing to do.** Pick one row from the table under [3. Tasks](#3-tasks), and narrow it to one section, one source, one case or one result. If you can't decide, ask to own a decision point (section 6).
+3. **Email Nik** at bear@bearbrown.co with the subject "AI Jobs Map paper: contributor". Include:
+   - your name and your GitHub username;
+   - the contribution you chose and what exactly you will look at;
+   - whether you hope to become an author or want to help without authorship.
+
+   Nik will add you to the repository as a collaborator. GitHub then emails you an invitation, which you must accept within seven days.
+4. **Claim the work.** Check the [open issues](https://github.com/nikbearbrown/ai-jobs-map/issues) to make sure nobody is already doing it. Then [open an issue](https://github.com/nikbearbrown/ai-jobs-map/issues/new) that says what you are taking on, and assign it to yourself.
+5. **Make a branch.** Clone the repository and create a branch named `your-name/short-description`, for example `priya/dp-25-ai-threshold`. Do not commit to `main`. If you don't use git, edit the file on GitHub with the pencil button and choose "Create a new branch" when you save.
+6. **Do the work.** Follow what the table asks you to send for the row you chose. Keep one branch to one piece of work.
+7. **Open a pull request.** Say what you changed, how you checked it, and where you used an AI tool. Write "Closes #" and your issue's number so the two are linked, and request a review from `nikbearbrown`.
+8. **Respond to the review.** Nik or another author will comment. Revise on the same branch until it is agreed, and it will be merged.
+9. **Present your work.** Come to Nik's Tuesday meeting or his office hours with a short, clear presentation of what you have done. Cover what you set out to do, what you did, what you found and the evidence for it, and what you will do next or need help with. Do this each time you attend, even when the work is unfinished. Nik will send the meeting details when he adds you.
+10. **Keep your record.** Your issues and pull requests are the record of what you did. If you hope to be an author, keep a list of them, because the paper's contribution statement is drawn from it.
+11. **Take the next step.** Pick another piece of work. If you want to be an author, tell Nik early and read [Credit and what we expect from authors](#1-how-credit-works).
+
+You can also help without access. Anyone can open an issue on this repository without emailing first.
+
 ## 1. How credit works
 
 We follow Yale's authorship guidance:
@@ -94,6 +117,7 @@ Each task lists its contributor role in the CRediT taxonomy, which most journals
 | Preregistration draft | Help draft the analysis plan for OSF before results are seen | Methodology, Writing – original draft | Component and writing |
 | Methods page | Write the public methods page for the site | Writing – original draft | Writing |
 | Substantive revision | Revise any section for intellectual content | Writing – review & editing | Writing |
+| Venue recommendation | Recommend a journal that fits the paper and that Northeastern covers in full (section 7). Every contributor does this once | Project administration | Acknowledgment alone; supports authorship when combined with a component |
 
 ### Integrity checks
 
@@ -135,3 +159,20 @@ Every analysis is built from choices: what counts as one role, how common a phra
 **With Claude Code, run /contribute.** It walks you through these steps, runs the tools, and asks you questions about your drafts. It never writes your rationale or interpretation, never helps with rating, and never approves anything. Without Claude Code, the same steps use `python3 -I pipeline/run.py` commands, listed in `pipeline/multiverse/contribute.py`.
 
 **Raters: finish your ratings first.** Branch results are results. Until the [roster](roster.yaml) marks your ratings complete, you can research decision points and write proposals, but not run branches or interpret them. Until then, also stay out of the run folders, the interpretations, other people's proposals, the decision log's reasons and the key results' notes, which hold the default values. `python3 -I pipeline/run.py key-results` lists the key results without them.
+
+## 7. Recommend a journal Northeastern covers in full
+
+Every contributor is asked to do this once. Northeastern's library has agreements with publishers that pay the open-access publishing fee for its authors. The library's page says the agreements are "open to all current Northeastern faculty, students and staff who are corresponding authors." Nik is the corresponding author on this paper, so they apply. Your job is to find a journal that is a good fit for this paper and whose fee is covered in full.
+
+1. **Know the paper.** Read the abstract and the draft, or the plan if there is no draft yet. Note the field, the method, the kind of article (research, review, tool, dataset) and its likely length.
+2. **Open the library's list.** Read [Open access publishing at Northeastern](https://library.northeastern.edu/resource_discovery/open-access-publishing/) and use its journal search, [SciFree for Northeastern](https://search.scifree.se/northeastern).
+3. **Keep only full coverage.** Some agreements pay 100% of the fee and some only give a discount. A discount does not count. Some publishers also cap the number of articles they cover in a year, so note any cap the page states.
+4. **Shortlist three journals** and check each one on the publisher's own site:
+   - **Scope:** does the journal's aims and scope cover this paper's question and method?
+   - **Article type:** does the journal accept this kind of article, and does the agreement cover that type?
+   - **Precedent:** two or three recent papers in the journal that are close to this one, with links.
+   - **Preprints and public drafts:** this paper's draft is in a public repository. Does the journal allow that, and is its review double-blind?
+   - **Practical limits:** length limit, typical time to a first decision, and any data or code requirements.
+5. **Recommend one journal and a runner-up.** [Open an issue](https://github.com/nikbearbrown/ai-jobs-map/issues/new) titled "Venue recommendation: " and the journal's name. Give your reasons, the links you used and the date you checked each fact.
+
+Confirm coverage on the library's page or the publisher's page yourself. Do not rely on memory or on an AI tool's answer, because the agreements and their caps change.

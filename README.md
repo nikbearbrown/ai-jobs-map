@@ -1,5 +1,11 @@
 # AI Jobs Map
 
+**The data and the paper behind the AI jobs map.**
+
+[See the map](https://jobs.humanitarians.ai/ecosystem) · [Help with the paper](paper/CONTRIBUTING-paper.md)
+
+**We're inviting collaborators.** Review one claim, check a source, or take on one of the tasks listed below. You don't need to review the whole paper to help. To join, follow [Getting started](paper/CONTRIBUTING-paper.md#getting-started) in the contributor guide.
+
 The data and the paper behind the AI jobs map: which organizations hire for AI, what kind of AI work their roles involve, and what their visa filings show. The map itself is shown at [jobs.humanitarians.ai/ecosystem](https://jobs.humanitarians.ai/ecosystem). This repo builds the data behind it and holds the paper that studies it.
 
 ## Abstract
@@ -25,7 +31,7 @@ Every task is listed in section 3 of the contributor guide.
 
 ## How to contribute
 
-Read the [contributor guide](paper/CONTRIBUTING-paper.md). It lists each kind of contribution with where to start and what to send, the rules for this repo, how to submit, and how credit and authorship work.
+Start with [Getting started](paper/CONTRIBUTING-paper.md#getting-started) in the [contributor guide](paper/CONTRIBUTING-paper.md): read the draft or plan, pick one thing to do, and email Nik to be added as a collaborator. The guide lists each kind of contribution with where to start and what to send, the rules for this repo, how to submit, and how credit and authorship work.
 
 - **A quick contribution:** open an issue about one claim, source or decision. You don't need to review the whole paper.
 - **To become an author:** take on a component of the work, help write the paper, approve the final version and agree to be accountable for it. The guide explains each step.
