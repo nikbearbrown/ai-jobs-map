@@ -2,6 +2,14 @@
 
 The data and the paper behind the AI jobs map: which organizations hire for AI, what kind of AI work their roles involve, and what their visa filings show. The map itself is shown at [jobs.humanitarians.ai/ecosystem](https://jobs.humanitarians.ai/ecosystem). This repo builds the data behind it and holds the paper that studies it.
 
+## The paper
+
+- **What it is:** a study of how Boston organizations use and present AI, using the map's data.
+- **Where it stands:** there is no draft and no preregistration yet. The contributor rules, a registry of 57 analysis decision points and the runner that tests alternatives to them are in place.
+- **Contributors start here:** read [paper/CONTRIBUTING-paper.md](paper/CONTRIBUTING-paper.md). It explains how credit works, what every author is expected to do, and every task the paper needs done. In Claude Code, typing `/contribute` walks you through it.
+
+## What is in this repo
+
 * **`pipeline/ai_jobs_map/`** builds firm records, ecosystem aggregates and the employer crosswalk from job postings, H-1B wage filings (LCA) and O*NET titles. Python standard library only. Every output is checked against the schemas in `pipeline/ai_jobs_map/schemas/`.
 * **`pipeline/multiverse/`** is the paper's branch runner: each contributor-proposed alternative to an analytic choice runs as its own branch, with full provenance.
 * **`paper/`** holds the contributor guide ([CONTRIBUTING-paper.md](paper/CONTRIBUTING-paper.md)), the roster, the decision-point registry and the logs.
