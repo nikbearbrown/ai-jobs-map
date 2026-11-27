@@ -2,7 +2,7 @@
 
 **The data and the paper behind the AI jobs map.**
 
-[See the map](https://jobs.humanitarians.ai/ecosystem) · [Help with the paper](paper/CONTRIBUTING-paper.md)
+[See the map](https://jobs.humanitarians.ai/ecosystem) · [Read the methods draft](paper/manuscript.md) · [Help with the paper](paper/CONTRIBUTING-paper.md)
 
 **We're inviting collaborators.** Review one claim, check a source, or take on one of the tasks listed below. You don't need to review the whole paper to help. To join, follow [Getting started](paper/CONTRIBUTING-paper.md#getting-started) in the contributor guide.
 
@@ -10,13 +10,13 @@ The data and the paper behind the AI jobs map: which organizations hire for AI, 
 
 ## Abstract
 
-*Working abstract. No manuscript exists yet, so this describes what the paper sets out to do. It reports no results.*
+*Working abstract for the rough methods manuscript. It reports no study results.*
 
 This paper studies how Boston-area organizations use and present AI, using the data behind the AI jobs map: job postings, H-1B wage filings and O*NET titles. Human raters classify firms from evidence packets under a written codebook. We then test how well language models and a simple co-occurrence baseline reproduce those human classifications, and we examine agreement among raters, calibration, and errors that rest on boilerplate text. Because many analytic choices could change the picture, the paper runs a multiverse analysis over 57 registered decision points. Each one is owned by a contributor who proposes alternatives and interprets what changed. The analysis plan is to be preregistered before results are seen.
 
 ## Where the draft is
 
-There is no draft yet. The closest documents are the contributor guide, [paper/CONTRIBUTING-paper.md](paper/CONTRIBUTING-paper.md), which describes the study's tasks, and the decision-point registry, [paper/multiverse/decision_points.yaml](paper/multiverse/decision_points.yaml).
+Read the [rough methods manuscript](paper/manuscript.md) and [silent critique](critiq-output/ai-jobs-map-author-review.md). The [contributor guide](paper/CONTRIBUTING-paper.md) and [decision registry](paper/multiverse/decision_points.yaml) remain the study references.
 
 ## What needs to be done
 

@@ -13,7 +13,7 @@ This paper studies how Boston organizations use and present AI, built on the AI 
 
 Follow these steps in order. Steps 1 to 3 get you access. Steps 4 to 9 take one contribution from start to finish.
 
-1. **Read first.** Read the [README](../README.md), then the rest of this guide. There is no draft of the paper yet. Allow about an hour. You don't need to follow every detail, but you should know what the paper claims and what it does not.
+1. **Read first.** Read the [README](../README.md), then the rest of this guide. The [rough methods manuscript](manuscript.md) reports no results. Allow about an hour. You don't need to follow every detail, but you should know what the paper claims and what it does not.
 2. **Choose one thing to do.** Pick one row from the table under [3. Tasks](#3-tasks), and narrow it to one section, one source, one case or one result. If you can't decide, ask to own a decision point (section 6).
 3. **Email Nik** at bear@bearbrown.co with the subject "AI Jobs Map paper: contributor". Include:
    - your name and your GitHub username;
